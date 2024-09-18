@@ -1,0 +1,9 @@
+[package]
+name = "quantum-emulator"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Chaix <gabriel.chaix@edu.devinci.fr>", "Malo Leroy <malo.leroy@edu.devinci.fr>","Marine Jolibert <marine.jolibert@edu.devinci.fr>"]
+
+[dependencies]
+ndarray = "0.16.1"
+num-complex = "0.4.6"
