@@ -3,16 +3,16 @@ extern crate num_complex;
 
 use ndarray::{arr2, linalg::kron, Array1, Array2};
 use num_complex::Complex64;
-use std::f64::consts::PI;
+//use std::f64::consts::PI;
 
 #[derive(Clone)]
 enum QuantumGate {
     H,
     X,
     Z,
-    Rx(f64),
-    Ry(f64),
-    Rz(f64),
+    //Rx(f64),
+    //Ry(f64),
+    //Rz(f64),
 }
 
 impl QuantumGate {
