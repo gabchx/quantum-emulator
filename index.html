@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<!-- Base code from kiichi -->
+<!-- https://github.com/kiichi/quantum-computing-circuit-designer/blob/master/index.html -->
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quantum Computing Circuit Designer</title>
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Existing styles... */
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #434343;
+            background-image: linear-gradient(#434343, #282828);
+        }
+
+        pre {
+            -moz-tab-size: 4;
+        }
+
+        /* Firefox */
+        pre {
+            tab-size: 4;
+        }
+
+        .navbar {
+            border-bottom: 1px solid darkgray;
+            background: #444;
+            height: 55px;
+            -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            -moz-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+        }
+
+        .navbar-section {
+            padding: 0 10px;
+        }
+
+        .modal-wide {
+            max-width: 120%;
+        }
+
+        .clickable {
+            cursor: pointer;
+        }
+
+        .gate-toolbar {
+            z-index: 300;
+            /* note: modal's backdrop is 400 */
+        }
+
+        #main {
+            background-color: transparent;
+            background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);
+            height: 100%;
+            background-size: 100px 100px;
+        }
+
+        .qubit-line {
+            border: 3px solid #222;
+            position: absolute;
+            width: 90%;
+        }
+
+        .gate {
+            background-color: #333;
+            width: 46px;
+            /* border 1px each side */
+            height: 46px;
+            border: 1px solid #666;
+            font-family: Arial, Helvetica, sans-serif;
+            z-index: 100;
+            -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            -moz-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+        }
+
+        .gate-placeholder {
+            border: 2px dashed white !important;
+            position: absolute;
+            width: 39px !important;
+            height: 39px !important;
+        }
+
+        .qubit-placeholder {
+            display: none;
+        }
+
+        .gate:before {
+            line-height: 46px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #bbb;
+            font-weight: 100;
+        }
+
+        .RX:before {
+            content: "Rx";
+            font-size: 2em;
+        }
+
+        .RY:before {
+            content: "Ry";
+            font-size: 2em;
+        }
+
+        .RZ:before {
+            content: "Rz";
+            font-size: 2em;
+        }
+
+        .X:before {
+            content: "X";
+            font-size: 2.5em;
+        }
+
+        .Y:before {
+            content: "Y";
+            font-size: 2.5em;
+        }
+
+        .Z:before {
+            content: "Z";
+            font-size: 2.5em;
+        }
+
+        .H:before {
+            content: "H";
+            font-size: 2.5em;
+        }
+
+        .M:before {
+            content: "M";
+            font-size: 2.5em;
+        }
+
+        /* CNOT gate styling */
+        .CNOT:before {
+            content: "⊕";
+            vertical-align: middle;
+            font-size: 3.5em;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #bbb;
+        }
+
+        .Q:before {
+            content: "❘0⟩";
+            font-size: 1.8em;
+        }
+
+        .Q {
+            background-color: #262626;
+        }
+
+        .control-placeholder {
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+
+        .cnot-line {
+            z-index: 50;
+        }
+
+        /* Styles for rotation gates */
+        .rotation-gate {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #bbb;
+            font-weight: 100;
+            font-size: 1.2em;
+            line-height: 1;
+            /* Added to reduce line spacing */
+        }
+
+        .rotation-gate .gate-label {
+            font-size: 1.4em;
+            margin-bottom: -6px;
+            /* Adjusted margin to bring labels closer */
+        }
+
+        .rotation-gate .theta-label {
+            font-size: 0.8em;
+            margin-top: -4px;
+            /* Adjusted margin to bring labels closer */
+        }
+
+        /* New styles for splitting the window */
+        #container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 55px);
+            /* Adjust for navbar height */
+        }
+
+        #circuit-designer {
+            flex: 9;
+            position: relative;
+            overflow: auto;
+        }
+
+        #simulation-section {
+            flex: 4;
+            background-color: #222;
+            color: #fff;
+            overflow: auto;
+            padding: 10px;
+        }
+
+        #main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            /* ... existing background styles ... */
+        }
+
+        /* Style for the simulation results */
+        #simulation-results {
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        /* Style for calculation time */
+        #calculation-time {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar" id="toolbar">
+        <section class="navbar-section">
+            <h1 class="navbar-brand mr-2 text-light ml-2">Quantum Computing Circuit Designer</h1>
+        </section>
+        <section class="navbar-section">
+            <div class="input-group input-inline">
+                <button class="btn" onClick="showExport()">Code <i class="icon icon-resize-horiz"></i></button>
+                <button class="btn" onClick="showExamples()">Examples <i class="icon icon-apps"></i></button>
+                <button id="export-button" class="btn" onClick="addQubit()">Qubit <i
+                        class="icon icon-plus"></i></button>
+                <!-- Moved the "Simulate Circuit" button here -->
+                <button class="btn" onclick="sendCircuitToServer()">Simulate Circuit<i
+                        class="icon icon-arrow-left"></i></button>
+            </div>
+        </section>
+    </header>
+    <div id="container">
+        <div id="circuit-designer">
+            <div id="main">
+                <!-- Existing main content will be rendered here -->
+            </div>
+        </div>
+        <div id="simulation-section">
+            <h2>Simulation Results</h2>
+            <div id="simulation-results">
+                <!-- Results will be displayed here -->
+            </div>
+            <div id="calculation-time">
+                <!-- Calculation time will be displayed here -->
+            </div>
+        </div>
+    </div>
+    <!-- EXPORT MODAL DIALOG -->
+    <div class="modal " id="modal-export">
+        <a href="#close" class="modal-overlay" onClick="hideDialog('modal-export')"></a>
+        <div class="modal-container modal-wide">
+            <div class="modal-header pt-3 pl-0 pr-0">
+                <a href="#close" class="btn btn-clear float-right" onClick="hideDialog('modal-export')"></a>
+                <div class="modal-title h5 columns">
+                    <div class="column col-1">
+                        Export
+                    </div>
+                    <div class="column col-3">
+                        <select id="export" class="form-select select-sm" onChange="bindCode()">
+                            <option value="qiskit">Qiskit</option>
+                            <option value="qasm">QASM</option>
+                            <option value="qsharp">Q#</option>
+                            <option value="json">Raw JSON Data</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body pt-0 pl-0 pr-0">
+                <div class="content">
+                    <pre class="code mt-0 " data-lang="Q"><code id="code"></code></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onClick="copyToClipboard()">Copy to Clipboard <i
+                        class="icon icon-link"></i></button>
+            </div>
+        </div>
+    </div>
+    <!-- EXAMPLES MODAL DIALOG -->
+    <div class="modal " id="modal-examples">
+        <a href="#close" class="modal-overlay" onClick="hideDialog('modal-examples')"></a>
+        <div class="modal-container">
+            <div class="modal-header pt-3 pl-0 pr-0">
+                <a href="#close" class="btn btn-clear float-right" onClick="hideDialog('modal-examples')"></a>
+                <div class="modal-title h5">Circuit Examples</div>
+            </div>
+            <div class="modal-body pt-0 pl-0 pr-0">
+                <div class="content">
+                    <ul class="menu" id="modal-examples-menu">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Include the math.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <!-- Draggable Library -->
+    <script>
+        // draggable https://github.com/bcherny/draggable/
+        !function (t, e) { "object" == typeof exports ? module.exports = e() : "function" == typeof define && define.amd ? define([], e) : t.Draggable = e() }(this, function () { "use strict"; var t = { grid: 0, filterTarget: null, limit: { x: null, y: null }, threshold: 0, setCursor: !1, setPosition: !0, smoothDrag: !0, useGPU: !0, onDrag: u, onDragStart: u, onDragEnd: u }, e = { transform: function () { for (var t = " -o- -ms- -moz- -webkit-".split(" "), e = document.body.style, n = t.length; n--;) { var o = t[n] + "transform"; if (o in e) return o } }() }, n = { assign: function () { for (var t = arguments[0], e = arguments.length, n = 1; n < e; n++) { var o = arguments[n]; for (var i in o) t[i] = o[i] } return t }, bind: function (t, e) { return function () { t.apply(e, arguments) } }, on: function (t, e, o) { if (e && o) n.addEvent(t, e, o); else if (e) for (var i in e) n.addEvent(t, i, e[i]) }, off: function (t, e, o) { if (e && o) n.removeEvent(t, e, o); else if (e) for (var i in e) n.removeEvent(t, i, e[i]) }, limit: function (t, e) { return e instanceof Array ? t < (e = [+e[0], +e[1]])[0] ? t = e[0] : t > e[1] && (t = e[1]) : t = +e, t }, addEvent: "attachEvent" in Element.prototype ? function (t, e, n) { t.attachEvent("on" + e, n) } : function (t, e, n) { t.addEventListener(e, n, !1) }, removeEvent: "attachEvent" in Element.prototype ? function (t, e, n) { t.detachEvent("on" + e, n) } : function (t, e, n) { t.removeEventListener(e, n, !1) } }; function o(e, o) { var i = this, r = n.bind(i.start, i), s = n.bind(i.drag, i), u = n.bind(i.stop, i); if (!a(e)) throw new TypeError("Draggable expects argument 0 to be an Element"); o = n.assign({}, t, o), n.assign(i, { element: e, handle: o.handle && a(o.handle) ? o.handle : e, handlers: { start: { mousedown: r, touchstart: r }, move: { mousemove: s, mouseup: u, touchmove: s, touchend: u } }, options: o }), i.initialize() } function i(t) { return parseInt(t, 10) } function r(t) { return "currentStyle" in t ? t.currentStyle : getComputedStyle(t) } function s(t) { return null != t } function a(t) { return t instanceof Element || "undefined" != typeof HTMLDocument && t instanceof HTMLDocument } function u() { } return n.assign(o.prototype, { setOption: function (t, e) { var n = this; return n.options[t] = e, n.initialize(), n }, get: function () { var t = this.dragEvent; return { x: t.x, y: t.y } }, set: function (t, e) { var n = this.dragEvent; return n.original = { x: n.x, y: n.y }, this.move(t, e), this }, dragEvent: { started: !1, x: 0, y: 0 }, initialize: function () { var t, o = this, i = o.element, s = (o.handle, i.style), a = r(i), u = o.options, f = e.transform, l = o._dimensions = { height: i.offsetHeight, left: i.offsetLeft, top: i.offsetTop, width: i.offsetWidth }; u.useGPU && f && ("none" === (t = a[f]) && (t = ""), s[f] = t + " translate3d(0,0,0)"), u.setPosition && (s.display = "block", s.left = l.left + "px", s.top = l.top + "px", s.width = l.width + "px", s.height = l.height + "px", s.bottom = s.right = "auto", s.margin = 0, s.position = "absolute"), u.setCursor && (s.cursor = "move"), o.setLimit(u.limit), n.assign(o.dragEvent, { x: l.left, y: l.top }), n.on(o.handle, o.handlers.start) }, start: function (t) { var e = this, o = e.getCursor(t), i = e.element; e.useTarget(t.target || t.srcElement) && (t.preventDefault && !t.target.getAttribute("contenteditable") ? t.preventDefault() : t.target.getAttribute("contenteditable") || (t.returnValue = !1), e.dragEvent.oldZindex = i.style.zIndex, i.style.zIndex = 1e4, e.setCursor(o), e.setPosition(), e.setZoom(), n.on(document, e.handlers.move)) }, drag: function (t) { var e = this, n = e.dragEvent, o = e.element, i = e._cursor, r = e._dimensions, s = e.options, a = r.zoom, u = e.getCursor(t), f = s.threshold, l = (u.x - i.x) / a + r.left, d = (u.y - i.y) / a + r.top; !n.started && f && Math.abs(i.x - u.x) < f && Math.abs(i.y - u.y) < f || (n.original || (n.original = { x: l, y: d }), n.started || (s.onDragStart(o, l, d, t), n.started = !0), e.move(l, d) && s.onDrag(o, n.x, n.y, t)) }, move: function (t, e) { var n = this, o = n.dragEvent, i = n.options, r = i.grid, s = n.element.style, a = n.limit(t, e, o.original.x, o.original.y); return !i.smoothDrag && r && (a = n.round(a, r)), (a.x !== o.x || a.y !== o.y) && (o.x = a.x, o.y = a.y, s.left = a.x + "px", s.top = a.y + "px", !0) }, stop: function (t) { var e, o = this, i = o.dragEvent, r = o.element, s = o.options, a = s.grid; n.off(document, o.handlers.move), r.style.zIndex = i.oldZindex, s.smoothDrag && a && (e = o.round({ x: i.x, y: i.y }, a), o.move(e.x, e.y), n.assign(o.dragEvent, e)), o.dragEvent.started && s.onDragEnd(r, i.x, i.y, t), o.reset() }, reset: function () { this.dragEvent.started = !1 }, round: function (t) { var e = this.options.grid; return { x: e * Math.round(t.x / e), y: e * Math.round(t.y / e) } }, getCursor: function (t) { return { x: (t.targetTouches ? t.targetTouches[0] : t).clientX, y: (t.targetTouches ? t.targetTouches[0] : t).clientY } }, setCursor: function (t) { this._cursor = t }, setLimit: function (t) { var e = this, o = function (t, e) { return { x: t, y: e } }; if (t instanceof Function) e.limit = t; else if (a(t)) { var i = e._dimensions, r = t.scrollHeight - i.height, u = t.scrollWidth - i.width; e.limit = function (t, e) { return { x: n.limit(t, [0, u]), y: n.limit(e, [0, r]) } } } else if (t) { var f = s(t.x), l = s(t.y); e.limit = f || l ? function (e, o) { return { x: f ? n.limit(e, t.x) : e, y: l ? n.limit(o, t.y) : o } } : o } else e.limit = o }, setPosition: function () { var t = this.element, e = t.style; n.assign(this._dimensions, { left: i(e.left) || t.offsetLeft, top: i(e.top) || t.offsetTop }) }, setZoom: function () { for (var t = this.element, e = 1; t = t.offsetParent;) { var n = r(t).zoom; if (n && "normal" !== n) { e = n; break } } this._dimensions.zoom = e }, useTarget: function (t) { var e = this.options.filterTarget; return !(e instanceof Function) || e(t) }, destroy: function () { n.off(this.handle, this.handlers.start), n.off(document, this.handlers.move) } }), o });
+    </script>
+
+    <script>
+        // Toolbar Blueprint
+        let toolbarGates = [
+            { type: "H", class: " gate-toolbar", x: 400, y: 5 },
+            { type: "X", class: " gate-toolbar", x: 480, y: 5 },
+            { type: "Y", class: " gate-toolbar", x: 530, y: 5 },
+            { type: "Z", class: " gate-toolbar", x: 580, y: 5 },
+            { type: "RX", class: " gate-toolbar", x: 650, y: 5 },
+            { type: "RY", class: " gate-toolbar", x: 700, y: 5 },
+            { type: "RZ", class: " gate-toolbar", x: 750, y: 5 },
+            { type: "CNOT", class: " gate-toolbar", x: 820, y: 5 },
+            { type: "M", class: " gate-toolbar", x: 890, y: 5 },
+        ];
+
+        // Exportable Variables
+        let state = {
+            labels: [],
+            qubits: 0,
+            gates: []
+        };
+
+        // Global counter for gate IDs
+        let gateIdCounter = 0;
+
+        // Variables for pending CNOT gate
+        let pendingCNOTGate = null;
+        let pendingControlSelection = false;
+
+        const samples = [
+            {
+                name: "New circuit",
+                category: "Basic",
+                state: {
+                    labels: [
+                    ],
+                    qubits: 3,
+                    gates: [
+                        { type: "Q", q: 0, t: 0 },
+                        { type: "Q", q: 1, t: 0 },
+                        { type: "Q", q: 2, t: 0 },
+                    ]
+                }
+            },
+            {
+                name: "Bell State",
+                category: "Basic",
+                state: {
+                    labels: [
+                        {
+                            text: 'Phase Query',
+                            t: [1, 2]
+                        },
+                        {
+                            text: 'Oracle',
+                            t: [3]
+                        },
+                        {
+                            text: 'Measurement',
+                            t: [4]
+                        }
+                    ],
+                    qubits: 2,
+                    gates: [
+                        { type: "Q", q: 0, t: 0 },
+                        { type: "Q", q: 1, t: 0 },
+                        // Create 1/sqrt(2)(|00> + |11>)
+                        { type: "H", q: 0, t: 1 },
+                        { type: "CNOT", q: 1, t: 2, controls: [0] },
+                        // Measure
+                        { type: "M", q: 0, t: 3 },
+                        { type: "M", q: 1, t: 3 }
+                    ]
+                }
+            },
+            {
+                name: "Quantum Teleportation",
+                category: "Quantum Internet",
+                state: {
+                    labels: [
+                        {
+                            text: 'Bob\'s Entanglement with the bridge',
+                            t: [1, 2]
+                        },
+                        {
+                            text: 'Alice is relating her bit with CNOT on bridge',
+                            t: [3, 4]
+                        },
+                        {
+                            text: 'Measurement',
+                            t: [5, 6]
+                        }
+                    ],
+                    qubits: 3,
+                    gates: [
+                        // Alice's qubit. She wants to clone this state in Bob's qubit
+                        // We just initialize this with |0> for now, but this could be rotated
+                        // and turn it to arbitral state |ψ>
+                        { type: "Q", q: 0, t: 0 },
+                        { type: "Q", q: 1, t: 0 },
+                        { type: "Q", q: 2, t: 0 },
+                        // Bob - Entangle his bit with bridge
+                        { type: "H", q: 1, t: 2 },
+                        { type: "CNOT", q: 2, t: 3, controls: [1] },
+                        // Alice - Relate her qubit with CNOT
+                        { type: "CNOT", q: 1, t: 4, controls: [0] },
+                        // Then apply H on her qubit 
+                        { type: "H", q: 0, t: 5 },
+                        // Measure - 3rd bit no need to measure, discard
+                        { type: "M", q: 0, t: 7 },
+                        { type: "M", q: 1, t: 7 }
+                    ]
+                }
+            },
+            {
+                name: "Deutch's Algorithm",
+                category: "Algorithm",
+                state: {
+                    labels: [
+                        {
+                            text: 'Phase Query',
+                            t: [1, 2]
+                        },
+                        {
+                            text: 'Oracle',
+                            t: [3]
+                        },
+                        {
+                            text: 'Measurement',
+                            t: [4]
+                        }
+                    ],
+                    qubits: 2,
+                    gates: [
+                        { type: "Q", q: 0, t: 0 },
+                        { type: "Q", q: 1, t: 0 },
+                        // Deutch's Algorithm
+                        // Setup
+                        { type: "H", q: 0, t: 2 },
+                        { type: "X", q: 1, t: 1 },
+                        { type: "H", q: 1, t: 2 },
+                        // Oracle e.g. Identity, balanced function
+                        { type: "CNOT", q: 1, t: 3, controls: [0] },
+                        // Measure
+                        { type: "M", q: 0, t: 4 },
+                        { type: "M", q: 1, t: 4 }
+                    ]
+                }
+            }
+        ];
+
+        state = samples[0].state; // example
+
+        // Assign IDs to gates in the initial state
+        state.gates.forEach((gate) => {
+            if (typeof gate.id === 'undefined') {
+                gate.id = gateIdCounter++;
+            }
+        });
+
+        // Reference to HTML Elements
+        let gateRefs = {};
+
+        // Globals
+        let gridSize = 100;
+        let offsetLeft = gridSize * 1;
+        let offsetTop = gridSize * 1;
+
+        // Main
+        renderMain();
+
+        function renderMain() {
+            clearMainArea();
+            renderQubitLines(state.qubits);
+            renderGates(state.gates);
+            renderToolbar();
+        }
+
+        function renderToolbar() {
+            let toolbarElem = document.getElementById('main');
+            toolbarGates.forEach((tgate) => {
+                let toolbarGate = createGate(tgate);
+                toolbarElem.appendChild(toolbarGate);
+                let options = {
+                    grid: gridSize,
+                    setCursor: true,
+                    smoothDrag: false,
+                    smoothDrag: true,
+                    onDragStart: startDragToolbarGate,
+                    onDrag: updateToolbarGate,
+                    onDragEnd: endDragToolbarGate
+                };
+                let drag = new Draggable(toolbarGate, options);
+                drag.set(tgate.x, tgate.y);
+                gateRefs['gate-toolbar-' + tgate.type] = drag;
+
+                let toolbarPlaceholder = createPlaceholder(tgate.x, tgate.y);
+                toolbarElem.append(toolbarPlaceholder);
+            });
+        }
+
+        function startDragToolbarGate(element, x, y, ev) {
+            if (!pendingControlSelection) {
+                showQubitPlaceholders();
+            }
+        }
+
+        function updateToolbarGate(element, x, y, ev) {
+        }
+
+        function endDragToolbarGate(element, x, y, ev) {
+            let tgateElem = gateRefs['gate-toolbar-' + element.dataset.type];
+
+            // add new gate
+            let t = getT(x);
+            let q = getQ(y);
+
+            if (tgateElem.element.dataset.type === 'CNOT') {
+                // For CNOT gates, check if any gate exists at time t
+                if (canAddCNOTGate(t)) {
+                    // Proceed to add CNOT gate
+                    addCNOTGateFromToolbar(t, q, tgateElem.element.dataset.type);
+                } else {
+                    alert('Cannot place a CNOT gate in a column that already contains a gate.');
+                }
+            } else {
+                if (canAddGate(t, q)) {
+                    let tmp = { type: tgateElem.element.dataset.type, q: q, t: t };
+
+                    // Check if gate is RX, RY, or RZ
+                    if (tmp.type === 'RX' || tmp.type === 'RY' || tmp.type === 'RZ') {
+                        let theta = prompt('Enter rotation angle θ (e.g., π/2, pi/4, 3.14):', 'π/2');
+                        if (theta === null) {
+                            // User cancelled, do not add the gate
+                            setTimeout(() => {
+                                tgateElem.set(tgateElem._dimensions.left, tgateElem._dimensions.top);
+                            }, 300);
+                            hideQubitPlaceholders();
+                            return;
+                        }
+                        // Parse the theta expression
+                        let parsedTheta = parseTheta(theta);
+                        if (parsedTheta === null) {
+                            alert('Invalid θ expression. Please try again.');
+                            setTimeout(() => {
+                                tgateElem.set(tgateElem._dimensions.left, tgateElem._dimensions.top);
+                            }, 300);
+                            hideQubitPlaceholders();
+                            return;
+                        }
+                        tmp.theta = theta;
+                        tmp.thetaValue = parsedTheta;
+                    }
+
+                    tmp.id = gateIdCounter++;
+                    state.gates.push(tmp);
+                    addGate(tmp);
+                } else {
+                    alert('Cannot place a gate on a qubit that already has a gate at this time.');
+                }
+            }
+
+            // Reset toolbar gate position
+            setTimeout(() => {
+                tgateElem.set(tgateElem._dimensions.left, tgateElem._dimensions.top);
+            }, 300);
+
+            hideQubitPlaceholders();
+        }
+
+        function parseTheta(thetaStr) {
+            try {
+                // Replace 'π' or 'PI' with 'pi' (Math.js recognizes 'pi')
+                let expression = thetaStr.replace(/π|PI/gi, 'pi');
+                // Evaluate the expression using Math.js
+                let value = math.evaluate(expression);
+                return value;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function canAddGate(t, q) {
+            // Check if a gate exists at t and q
+            for (let i = 0; i < state.gates.length; i++) {
+                if (state.gates[i].t === t && state.gates[i].q === q) {
+                    return false; // There is already a gate at this time and qubit
+                }
+            }
+            if (q < 0 || q >= state.qubits) {
+                return false;
+            }
+            return true;
+        }
+
+        function canAddCNOTGate(t) {
+            // Check if any gate exists at time t
+            for (let i = 0; i < state.gates.length; i++) {
+                if (state.gates[i].t === t) {
+                    return false; // There is already a gate at this time
+                }
+            }
+            return true;
+        }
+
+        function addCNOTGateFromToolbar(t, q, type) {
+            // Create temporary CNOT gate with target qubit, t, and no control qubit
+            let tmp = {
+                type: 'CNOT',
+                q: q, // target qubit
+                t: t,
+                controls: [], // control qubit to be selected
+                id: gateIdCounter++
+            };
+
+            if (!pendingControlSelection) {
+                pendingControlSelection = true;
+                pendingCNOTGate = tmp;
+
+                // Show placeholders on other qubits to select control qubit
+                showControlPlaceholders(t, q);
+
+                // Add the gate to the grid but in a 'pending' state
+                state.gates.push(tmp);
+                addGate(tmp);
+            }
+        }
+
+        function showControlPlaceholders(t, targetQubit) {
+            for (let q = 0; q < state.qubits; q++) {
+                if (q !== targetQubit) {
+                    let x = getX(t);
+                    let y = getY(q);
+
+                    let placeholder = createControlPlaceholder(x, y, t, q);
+                    document.getElementById('main').appendChild(placeholder);
+                }
+            }
+        }
+
+        function createControlPlaceholder(x, y, t, q) {
+            let placeholder = document.createElement('div');
+            placeholder.className = 'control-placeholder';
+            placeholder.style.left = x + 'px';
+            placeholder.style.top = y + 'px';
+            placeholder.style.width = '46px';
+            placeholder.style.height = '46px';
+            placeholder.style.position = 'absolute';
+            placeholder.style.border = '2px dashed red';
+            placeholder.style.cursor = 'pointer';
+
+            placeholder.dataset.t = t;
+            placeholder.dataset.q = q;
+
+            placeholder.addEventListener('click', selectControlQubit);
+
+            return placeholder;
+        }
+
+        function selectControlQubit(e) {
+            let q = parseInt(e.target.dataset.q);
+
+            if (pendingControlSelection && pendingCNOTGate) {
+                // Ensure control qubit is not same as target qubit
+                if (q !== pendingCNOTGate.q) {
+                    pendingCNOTGate.controls = [q];
+                    pendingControlSelection = false;
+
+                    // Remove placeholders
+                    removeControlPlaceholders();
+
+                    // Redraw the gate to include control line
+                    drawCNOTLine(pendingCNOTGate);
+                    pendingCNOTGate = null;
+                } else {
+                    alert('Control qubit cannot be the same as target qubit.');
+                }
+            }
+        }
+
+        function removeControlPlaceholders() {
+            let placeholders = document.querySelectorAll('.control-placeholder');
+            placeholders.forEach((elem) => {
+                elem.parentNode.removeChild(elem);
+            });
+        }
+
+        function addGate(gate) {
+            let gateElem = createGate(gate);
+            document.getElementById('main').appendChild(gateElem);
+
+            let x = getX(gate.t);
+            let y = getY(gate.q);
+
+            let limX = null;
+            let limY = null;
+
+            let cursor = true;
+
+            // Can't move CNOT gate or initial Q gates
+            if (gate.type === 'Q' || gate.type === 'CNOT') {
+                limX = x;
+                limY = y;
+                cursor = false;
+            }
+
+            let options = {
+                grid: gridSize,
+                setCursor: cursor,
+                smoothDrag: true,
+                limit: { x: limX, y: limY },
+                onDragStart: startDragGate,
+                onDrag: updateGate,
+                onDragEnd: endDragGate
+            };
+            let drag = new Draggable(gateElem, options);
+            drag.set(x, y);
+            gateRefs['gate-' + gate.id] = drag;
+
+            // For CNOT gate, draw control line if control is set
+            if (gate.type === 'CNOT' && gate.controls.length > 0) {
+                drawCNOTLine(gate);
+            }
+        }
+
+        function createGate(gate) {
+            let gateElem = document.createElement("div");
+
+            // For rotation gates, display θ value
+            if ((gate.type === 'RX' || gate.type === 'RY' || gate.type === 'RZ') && gate.theta !== undefined) {
+                gateElem.className = "gate rotation-gate" + (gate.class ? gate.class : "");
+                gateElem.innerHTML = '<span class="gate-label">' + gate.type + '</span><br><span class="theta-label">θ=' + gate.theta + '</span>';
+            } else {
+                gateElem.className = "gate " + gate.type + (gate.class ? gate.class : "");
+            }
+
+            gateElem.setAttribute('data-type', gate.type);
+            gateElem.setAttribute('data-id', gate.id);
+            gateElem.setAttribute('data-t', gate.t);
+            gateElem.setAttribute('data-q', gate.q);
+            gateElem.id = 'gate-' + gate.id;
+
+            // Add double-click event listener to delete gate
+            gateElem.addEventListener('dblclick', function (e) {
+                let id = parseInt(gateElem.getAttribute('data-id'));
+                deleteGate(id);
+            });
+            return gateElem;
+        }
+
+        // Modify the deleteGate function
+        function deleteGate(id) {
+            // Find the gate in state.gates
+            let idx = state.gates.findIndex(gate => gate.id === id);
+            if (idx !== -1) {
+                let gateToDelete = state.gates[idx];
+
+                if (gateToDelete.type === 'Q') {
+                    // Remove the entire qubit line and all gates on it
+                    let qubitIndex = gateToDelete.q;
+
+                    // Remove all gates on this qubit
+                    state.gates = state.gates.filter(gate => gate.q !== qubitIndex);
+
+                    // Remove qubit line from DOM
+                    let qubitLineElem = document.getElementById('qubit-line-' + qubitIndex);
+                    if (qubitLineElem) {
+                        qubitLineElem.parentNode.removeChild(qubitLineElem);
+                    }
+
+                    // Remove gate elements from DOM and adjust gates after the deleted qubit
+                    for (let gateId in gateRefs) {
+                        let gateDragInstance = gateRefs[gateId];
+                        let gateElem = gateDragInstance.element;
+                        let gateQubit = parseInt(gateElem.getAttribute('data-q'));
+
+                        if (gateQubit === qubitIndex) {
+                            // Remove gate
+                            gateElem.parentNode.removeChild(gateElem);
+                            delete gateRefs[gateId];
+                        } else if (gateQubit > qubitIndex) {
+                            // Adjust qubit index
+                            gateElem.setAttribute('data-q', gateQubit - 1);
+                            let yOld = getY(gateQubit);
+                            let yNew = getY(gateQubit - 1);
+                            gateElem.style.top = yNew + 'px';
+                        }
+                    }
+
+                    // Adjust qubit indices in state.gates for qubits after the deleted one
+                    state.gates.forEach(gate => {
+                        if (gate.q > qubitIndex) {
+                            gate.q -= 1;
+                        }
+                        // Also adjust controls in CNOT gates
+                        if (gate.controls) {
+                            gate.controls = gate.controls.map(controlQubit => {
+                                return controlQubit > qubitIndex ? controlQubit - 1 : controlQubit;
+                            });
+                        }
+                    });
+
+                    // Decrease the number of qubits
+                    state.qubits -= 1;
+
+                    // Adjust positions of qubit lines after the deleted one
+                    for (let q = qubitIndex + 1; q <= state.qubits; q++) {
+                        let qubitLineElem = document.getElementById('qubit-line-' + q);
+                        if (qubitLineElem) {
+                            qubitLineElem.id = 'qubit-line-' + (q - 1);
+                            let top = parseInt(qubitLineElem.style.top);
+                            qubitLineElem.style.top = (top - gridSize) + 'px';
+                        }
+                    }
+
+                    // Re-render the main area to update the placeholders
+                    renderMain();
+
+                } else {
+                    // Remove the single gate
+                    state.gates.splice(idx, 1);
+
+                    // Remove gate element from DOM
+                    let gateElem = document.getElementById('gate-' + id);
+                    if (gateElem) {
+                        gateElem.parentNode.removeChild(gateElem);
+                    }
+
+                    // Remove from gateRefs
+                    if (gateRefs['gate-' + id]) {
+                        delete gateRefs['gate-' + id];
+                    }
+
+                    // Remove CNOT line if it exists
+                    let cnotLine = document.getElementById('cnot-line-' + id);
+                    if (cnotLine) {
+                        cnotLine.parentNode.removeChild(cnotLine);
+                    }
+
+                    // Remove CNOT circle if it exists
+                    let cnotCircle = document.getElementById('cnot-circle-' + id);
+                    if (cnotCircle) {
+                        cnotCircle.parentNode.removeChild(cnotCircle);
+                    }
+                }
+            }
+        }
+
+        function drawCNOTLine(gate) {
+            let controlQubit = gate.controls[0];
+            let targetQubit = gate.q;
+            let t = gate.t;
+
+            let x = getX(t) + 23; // Center of gate
+            let y1 = getY(controlQubit) + 23;
+            let y2 = getY(targetQubit) + 23;
+
+            let line = document.createElement('div');
+            line.className = 'cnot-line';
+            line.style.position = 'absolute';
+            line.style.left = x + 'px';
+            line.style.top = Math.min(y1, y2) + 'px';
+            line.style.width = '4px';
+            line.style.height = Math.abs(y2 - y1) + 'px';
+            line.style.backgroundColor = '#333';
+            line.id = 'cnot-line-' + gate.id;
+
+            // Create a filled circle at the control qubit
+            let circle = document.createElement('div');
+            circle.className = 'cnot-circle';
+            circle.style.position = 'absolute';
+            circle.style.left = (x - 10) + 'px'; // Center the circle horizontally
+            circle.style.top = (y1 - 10) + 'px'; // Center the circle vertically
+            circle.style.width = '20px';
+            circle.style.height = '20px';
+            circle.style.backgroundColor = '#bbb';
+            circle.style.borderRadius = '50%';
+            circle.id = 'cnot-circle-' + gate.id;
+
+            document.getElementById('main').appendChild(circle);
+            document.getElementById('main').appendChild(line);
+
+        }
+
+        function createPlaceholder(x, y, className, t = -1, q = -1) {
+            let gateElem = document.createElement("div");
+            gateElem.className = "gate-placeholder " + (className ? className : "");
+            gateElem.style.left = x + "px";
+            gateElem.style.top = y + "px";
+            gateElem.setAttribute('data-t', t);
+            gateElem.setAttribute('data-q', q);
+            return gateElem;
+        }
+
+        function clearMainArea() {
+            document.getElementById('main').innerHTML = '';
+        }
+
+        function renderQubitLines(qubits) {
+            for (let i = 0; i < qubits; i++) {
+                addQubitLine(i);
+            }
+        }
+
+        function addQubitLine(idx) {
+            let qubitLine = createQubitLine(idx); // idx is q
+            let main = document.getElementById('main');
+            main.appendChild(qubitLine);
+
+            for (let t = 0; t < (window.innerWidth / 125); t++) {
+                let x = getX(t);
+                let qPlaceholder = createPlaceholder(x - gridSize - 25, 0 - 25, "qubit-placeholder", t, idx);
+                qubitLine.append(qPlaceholder);
+            }
+        }
+
+        function createQubitLine(idx) {
+            let qubitLine = document.createElement('hr');
+            qubitLine.className = 'qubit-line';
+            qubitLine.style.left = (25 + offsetLeft) + 'px';
+            qubitLine.style.top = (offsetTop + (idx * gridSize) + 15) + 'px';
+            qubitLine.id = 'qubit-line-' + idx;
+            return qubitLine;
+        }
+
+        function renderGates(gates) {
+            gates.forEach((gate) => {
+                if (typeof gate.id === 'undefined') {
+                    gate.id = gateIdCounter++;
+                }
+                addGate(gate);
+            });
+        }
+
+        function startDragGate(element, x, y, ev) {
+            if (!pendingControlSelection) {
+                showQubitPlaceholders();
+            }
+        }
+
+        function updateGate(element, x, y, ev) {
+            let id = parseInt(element.dataset.id);
+            let idx = state.gates.findIndex(gate => gate.id === id);
+
+            if (idx !== -1) {
+                let tNew = getT(x);
+                let qNew = getQ(y);
+
+                // For gates other than CNOT
+                if (state.gates[idx].type !== 'CNOT') {
+                    // Check if we can move the gate to new position
+                    if (canAddGate(tNew, qNew)) {
+                        state.gates[idx].t = tNew;
+                        state.gates[idx].q = qNew;
+
+                        // Update data attributes
+                        element.setAttribute('data-t', state.gates[idx].t);
+                        element.setAttribute('data-q', state.gates[idx].q);
+                    } else {
+                        // Revert position
+                        let xOld = getX(state.gates[idx].t);
+                        let yOld = getY(state.gates[idx].q);
+                        element.style.left = xOld + 'px';
+                        element.style.top = yOld + 'px';
+                    }
+                } else {
+                    // For CNOT gates, prevent moving
+                    let xOld = getX(state.gates[idx].t);
+                    let yOld = getY(state.gates[idx].q);
+                    element.style.left = xOld + 'px';
+                    element.style.top = yOld + 'px';
+                }
+
+                // Update CNOT line if necessary
+                if (state.gates[idx].type === 'CNOT') {
+                    let cnotLine = document.getElementById('cnot-line-' + id);
+                    if (cnotLine) {
+                        cnotLine.parentNode.removeChild(cnotLine);
+                    }
+                    let cnotCircle = document.getElementById('cnot-circle-' + id);
+                    if (cnotCircle) {
+                        cnotCircle.parentNode.removeChild(cnotCircle);
+                    }
+                    drawCNOTLine(state.gates[idx]);
+                }
+            }
+        }
+
+        function endDragGate(element, x, y, ev) {
+            hideQubitPlaceholders();
+        }
+
+        function showQubitPlaceholders() {
+            document.querySelectorAll(".qubit-placeholder").forEach((elem) => {
+                elem.style.display = 'block';
+            });
+        }
+
+        function hideQubitPlaceholders() {
+            document.querySelectorAll(".qubit-placeholder").forEach((elem) => {
+                elem.style.display = 'none';
+            })
+        }
+
+        // translate evolution timeline t to screen coord x
+        function getX(t) {
+            return offsetLeft + t * gridSize;
+        }
+
+        // translate qubits position q to screen coord y
+        function getY(q) {
+            return offsetTop + q * gridSize;
+        }
+
+        // translate screen coord x to evolution timeline t
+        function getT(x) {
+            return (x - offsetLeft) / gridSize;
+        }
+
+        // translate screen coord y to qubits position q
+        function getQ(y) {
+            return (y - offsetTop) / gridSize;
+        }
+
+        // Export functions
+        function exportQASM(data) {
+            let glines = [];
+            for (let i = 0; i < data?.gates?.length; i++) {
+                let gtype = data?.gates[i]?.type;
+                let tpos = data?.gates[i]?.t;
+                let qpos = data?.gates[i]?.q;
+                if (!glines[tpos]) {
+                    glines[tpos] = [];
+                    glines[tpos][0] = `// t=${tpos}`;
+                }
+                let func = '';
+                if (gtype === 'Q') {
+                    // do nothing
+                }
+                else if (gtype === 'CNOT') {
+                    let controls = data?.gates[i]?.controls;
+                    func = `cx q[${controls[0]}], q[${qpos}];`;
+                }
+                else if (gtype === 'M') {
+                    func = `measure q[${qpos}] -> c[${qpos}];`;
+                }
+                else if (gtype === 'RX' || gtype === 'RY' || gtype === 'RZ') {
+                    let thetaValue = data?.gates[i]?.thetaValue;
+                    if (thetaValue !== undefined) {
+                        func = `${gtype.toLowerCase()}(${thetaValue}) q[${qpos}];`;
+                    } else {
+                        func = `${gtype.toLowerCase()} q[${qpos}];`;
+                    }
+                }
+                else {
+                    func = `${gtype.toLowerCase()} q[${qpos}];`;
+                }
+                if (func) {
+                    glines[tpos][1 + qpos] = func;
+                }
+            }
+
+            let gatesCode = glines.filter((line) => line.length > 1).map((line) => {
+                return line.filter((seg) => seg).map((seg) => {
+                    return seg;
+                }).join('\n');
+            }).join('\n\n');
+
+            let codeStr = `
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[${data?.qubits}];
+creg c[${data?.qubits}];
+${gatesCode}
+`;
+            return codeStr;
+        }
+
+        function exportQiskit(data) {
+            // Initialize code string with imports and register declarations
+            let codeStr = `
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from numpy import pi
+
+qreg_q = QuantumRegister(${data.qubits}, 'q')
+${data.gates.filter(gate => gate.type === 'M').length > 0 ? `creg_c = ClassicalRegister(${data.gates.filter(gate => gate.type === 'M').length}, 'c')\ncircuit = QuantumCircuit(qreg_q, creg_c)` : 'circuit = QuantumCircuit(qreg_q)'}
+
+        `;
+
+            // Initialize an array to hold the gates, ordered by time (t)
+            let glines = [];
+
+            // Loop over each gate in the data
+            for (let i = 0; i < data.gates.length; i++) {
+                let gate = data.gates[i];
+                let gtype = gate.type;
+                let tpos = gate.t;
+                let qpos = gate.q;
+
+                if (!glines[tpos]) {
+                    glines[tpos] = [];
+                }
+
+                // Generate the corresponding Qiskit code for each gate type
+                let func = '';
+                switch (gtype) {
+                    case 'Q':
+                        // Do nothing for initial qubit gates
+                        break;
+                    case 'CNOT':
+                        let controls = gate.controls;
+                        func = `circuit.cx(qreg_q[${controls[0]}], qreg_q[${qpos}])`;
+                        break;
+                    case 'H':
+                        func = `circuit.h(qreg_q[${qpos}])`;
+                        break;
+                    case 'X':
+                        func = `circuit.x(qreg_q[${qpos}])`;
+                        break;
+                    case 'Y':
+                        func = `circuit.y(qreg_q[${qpos}])`;
+                        break;
+                    case 'Z':
+                        func = `circuit.z(qreg_q[${qpos}])`;
+                        break;
+                    case 'M':
+                        func = `circuit.measure(qreg_q[${qpos}], creg_c[${qpos}])`;
+                        break;
+                    case 'RX':
+                        let thetaValueRX = gate.thetaValue !== undefined ? gate.thetaValue : 'pi';
+                        func = `circuit.rx(${thetaValueRX}, qreg_q[${qpos}])`;
+                        break;
+                    case 'RY':
+                        let thetaValueRY = gate.thetaValue !== undefined ? gate.thetaValue : 'pi';
+                        func = `circuit.ry(${thetaValueRY}, qreg_q[${qpos}])`;
+                        break;
+                    case 'RZ':
+                        let thetaValueRZ = gate.thetaValue !== undefined ? gate.thetaValue : 'pi';
+                        func = `circuit.rz(${thetaValueRZ}, qreg_q[${qpos}])`;
+                        break;
+                    default:
+                        // Handle other gates if necessary
+                        break;
+                }
+
+                if (func) {
+                    glines[tpos].push(func);
+                }
+            }
+
+            // Concatenate the code lines in order of time (t)
+            for (let t = 0; t < glines.length; t++) {
+                if (glines[t]) {
+                    codeStr += '\n' + glines[t].join('\n');
+                }
+            }
+
+            return codeStr;
+        }
+
+
+        function exportQSharp(data) {
+            let glines = [];
+            for (let i = 0; i < data?.gates?.length; i++) {
+                let gtype = data?.gates[i]?.type;
+                let tpos = data?.gates[i]?.t;
+                let qpos = data?.gates[i]?.q;
+                if (!glines[tpos]) {
+                    glines[tpos] = [];
+                    glines[tpos][0] = `// t=${tpos}`;
+                }
+                let func = '';
+                if (gtype === 'Q') {
+                    // do nothing
+                }
+                else if (gtype === 'CNOT') {
+                    let controls = data?.gates[i]?.controls;
+                    func = `CNOT(qubits[${controls[0]}],qubits[${qpos}]);`;
+                }
+                else if (gtype === 'RX' || gtype === 'RY' || gtype === 'RZ') {
+                    let thetaValue = data?.gates[i]?.thetaValue;
+                    if (thetaValue !== undefined) {
+                        let gateFunc = gtype === 'RX' ? 'Rx' : gtype === 'RY' ? 'Ry' : 'Rz';
+                        func = `${gateFunc}(${thetaValue}, qubits[${qpos}]);`;
+                    } else {
+                        func = `${gtype}(qubits[${qpos}]);`;
+                    }
+                }
+                else {
+                    func = `${gtype}(qubits[${qpos}]);`;
+                }
+                if (func) {
+                    glines[tpos][1 + qpos] = func;
+                }
+            }
+
+            let gatesCode = glines.filter((line) => line.length > 1).map((line) => {
+                return line.filter((seg) => seg).map((seg) => {
+                    return seg;
+                }).join('\n\t\t\t');
+            }).join('\n\n\t\t\t');
+
+            let usingCode = `
+\t\tusing(qubits = Qubit[${data?.qubits}]){
+\t\t\t${gatesCode}
+
+\t\t\t//Reset All
+\t\t\tfor(qb in qubits){
+\t\t\t\tReset(qb);
+\t\t\t}
+\t\t}
+`;
+            let codeStr = `namespace MyCircuit {
+\topen Microsoft.Quantum.Canon;
+\topen Microsoft.Quantum.Intrinsic;
+\topen Microsoft.Quantum.Convert;
+\topen Microsoft.Quantum.Math;
+
+\t@EntryPoint()
+\toperation Main(): Unit{
+${usingCode}
+\t}
+}
+`;
+            return codeStr;
+        }
+
+        function exportJSON(data) {
+            return JSON.stringify(data, null, 4);
+        }
+
+        function showExport() {
+            document.getElementById("modal-export").classList.add('active');
+            bindCode();
+        }
+
+        function bindCode() {
+            let type = document.querySelector('#export').value;
+            generateCode(type, state);
+        }
+
+        function generateCode(type, data) {
+            let code = '';
+            if (type === 'qasm') {
+                code = exportQASM(data);
+            }
+            else if (type === 'qsharp') {
+                code = exportQSharp(data);
+            }
+            else if (type === 'qiskit') {
+                code = exportQiskit(data);
+            }
+            else if (type === 'json') {
+                code = exportJSON(data);
+            }
+            document.getElementById('code').innerHTML = code;
+        }
+
+        function hideDialog(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function copyToClipboard() {
+            var input = document.createElement('textarea');
+            input.innerHTML = document.getElementById('code').innerHTML;
+            document.body.appendChild(input);
+            input.select();
+            var result = document.execCommand('copy');
+            document.body.removeChild(input);
+            return result;
+        }
+
+        function showExamples() {
+            document.getElementById('modal-examples-menu').innerHTML = createExampleMenuItems(samples);
+            document.getElementById("modal-examples").classList.add('active');
+        }
+
+        function createExampleMenuItems(sampleData) {
+            const categories = ["Basic", "Quantum Internet", "Algorithm"];
+            return categories.map((cat) => {
+                let retHtml = `<li class="divider" data-content="${cat}"></li>`
+                    + sampleData
+                        .map((item, index) => {
+                            item['index'] = index;
+                            return item;
+                        })
+                        .filter((item) => item.category === cat)
+                        .map((item) => {
+                            return `                        
+                        <li class="menu-item">
+                          <a class="clickable" onclick="loadExample(${item.index})">
+                            ${item.name} <i class="icon icon-download"></i>
+                          </a>
+                        </li>                       
+                        `;
+                        }).join("\n");
+                return retHtml;
+            }).join("\n");
+        }
+
+        function loadExample(index) {
+            state = samples[index].state;
+            // Assign IDs to gates
+            state.gates.forEach((gate) => {
+                if (typeof gate.id === 'undefined') {
+                    gate.id = gateIdCounter++;
+                }
+            });
+            renderMain();
+            hideDialog('modal-examples');
+        }
+
+        function addQubit() {
+            state.qubits++;
+            addQubitLine(state.qubits - 1);
+            let newGate = { type: "Q", q: state.qubits - 1, t: 0 };
+            newGate.id = gateIdCounter++;
+            state.gates.push(newGate);
+            addGate(newGate);
+        }
+
+        function sendCircuitToServer() {
+            var jsonCircuit = exportJSON(state);
+
+            if (typeof jsonCircuit === 'string') {
+                jsonCircuit = JSON.parse(jsonCircuit);
+            }
+
+            console.log('Sending circuit to server:', jsonCircuit);
+
+            let startTime = Date.now();
+
+            fetch('http://127.0.0.1:8000/simulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonCircuit)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    let endTime = Date.now();
+                    let calculationTime = endTime - startTime;
+
+                    console.log('Unitary matrix:', data);
+                    // Update the simulation results section
+                    displaySimulationResults(data, calculationTime);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Optionally display error in the simulation section
+                    displaySimulationError(error);
+                });
+        }
+
+        function displaySimulationResults(data, calculationTime) {
+            let resultsDiv = document.getElementById('simulation-results');
+            let timeDiv = document.getElementById('calculation-time');
+
+            // Format state vector data
+            let resultStr = JSON.stringify(data, null, 2);
+            resultsDiv.textContent = resultStr;
+            timeDiv.textContent = 'Calculation time: ' + calculationTime + ' ms';
+
+            // Extract amplitudes and probabilities
+            let amplitudes = data.state_vector.map(v => Math.sqrt(v[0] * v[0] + v[1] * v[1]));
+            let probabilities = amplitudes.map(a => a * a);
+
+            // Chart.js visualization
+            let ctx = document.getElementById('resultsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.basis_vectors,
+                    datasets: [{
+                        label: 'Probability Amplitude',
+                        data: probabilities,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Quantum State Probabilities'
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function displaySimulationError(error) {
+            let resultsDiv = document.getElementById('simulation-results');
+            let timeDiv = document.getElementById('calculation-time');
+
+            resultsDiv.textContent = 'Error: ' + error.message;
+            timeDiv.textContent = '';
+        }
+    </script>
+
+</body>
+
+</html>
