@@ -7,7 +7,10 @@ mod hook;
 use crate::hook::{convert_json_circuit, JSONCircuit};
 use crate::logic::Circuit;
 use rocket::serde::json::Json;
+use rocket::{fs::NamedFile, response::Redirect};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
+use std::path::PathBuf;
+use std::env;
 
 #[post("/simulate", format = "json", data = "<json_circuit>")]
 
@@ -32,9 +35,28 @@ fn options_simulate() -> &'static str {
     ""
 }
 
+#[get("/")]
+fn index() -> Redirect {
+    let redirect = Redirect::to(uri!("/home"));
+    redirect
+}
+
+#[get("/home")]
+async fn home() -> Result<NamedFile, std::io::Error> {
+    // Construct the path to the index.html file
+    let mut path = env::current_dir().expect("Failed to get current directory");
+    path.push("src/front/index.html");
+
+    NamedFile::open(path).await
+}
+
+
+
 #[launch]
 fn rocket() -> _ {
     use rocket::http::Method;
+    println!("Current working directory: {:?}", std::env::current_dir());
+
 
     let cors = CorsOptions::default()
         .allowed_origins(AllowedOrigins::all())
@@ -48,6 +70,6 @@ fn rocket() -> _ {
         .allow_credentials(true);
 
     rocket::build()
-        .mount("/", routes![simulate, options_simulate])
+        .mount("/", routes![simulate, options_simulate, index, home])
         .attach(cors.to_cors().expect("Error attaching CORS"))
 }
