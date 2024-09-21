@@ -7,6 +7,7 @@ Homemade quantum emulator, made with Rust.
 ### Quickstart
 
 ```bash
+cd quantum_emulator
 cargo install --path .
 cargo run
 ```
