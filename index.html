@@ -223,18 +223,25 @@
             flex: 4;
             background-color: #222;
             color: #fff;
-            overflow: auto;
-            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
         }
 
-        #main {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-            /* ... existing background styles ... */
+        #calculation-time {
+            text-align: left;
+            font-size: 14px;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .simulation-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            /* Aligns table and chart at the top */
+            margin: 0;
+            /* Ensure there's no extra margin pushing it down */
         }
 
         /* Style for the simulation results */
@@ -242,6 +249,13 @@
             white-space: pre-wrap;
             font-family: monospace;
             font-size: 14px;
+            width: 25%;
+            overflow: auto;
+            margin-right: 20px;
+        }
+
+        #simulation-chart {
+            width: 60%;
         }
 
         /* Style for calculation time */
@@ -275,15 +289,25 @@
                 <!-- Existing main content will be rendered here -->
             </div>
         </div>
+
         <div id="simulation-section">
             <h2>Simulation Results</h2>
-            <div id="simulation-results">
-                <!-- Results will be displayed here -->
-            </div>
             <div id="calculation-time">
                 <!-- Calculation time will be displayed here -->
             </div>
+            <div class="simulation-container">
+                <div id="simulation-results">
+                    <!-- Results (Table) will be displayed here -->
+                </div>
+                <div id="simulation-chart">
+                    <canvas id="quantumChart" width="1000" height="170"></canvas>
+                </div>
+            </div>
         </div>
+
+
+
+
     </div>
     <!-- EXPORT MODAL DIALOG -->
     <div class="modal " id="modal-export">
@@ -1398,47 +1422,46 @@ ${usingCode}
             let resultsDiv = document.getElementById('simulation-results');
             let timeDiv = document.getElementById('calculation-time');
 
-            // Format state vector data
-            let resultStr = JSON.stringify(data, null, 2);
-            resultsDiv.textContent = resultStr;
-            timeDiv.textContent = 'Calculation time: ' + calculationTime + ' ms';
+            // Extract basis_vectors and state_vector from data
+            const { basis_vectors, state_vector } = data;
 
-            // Extract amplitudes and probabilities
-            let amplitudes = data.state_vector.map(v => Math.sqrt(v[0] * v[0] + v[1] * v[1]));
-            let probabilities = amplitudes.map(a => a * a);
+            // Calculate magnitudes (|amplitude| = sqrt(real^2 + imag^2))
+            const magnitudes = state_vector.map(amplitude => {
+                const real = amplitude[0];
+                const imag = amplitude[1];
+                return Math.sqrt(real * real + imag * imag);
+            });
 
-            // Chart.js visualization
-            let ctx = document.getElementById('resultsChart').getContext('2d');
-            new Chart(ctx, {
+            // Destroy the previous chart instance if it exists (to avoid stacking multiple charts)
+            if (window.myQuantumChart) {
+                window.myQuantumChart.destroy();
+            }
+
+            // Create the Chart.js bar chart
+            const ctx = document.getElementById('quantumChart').getContext('2d');
+            window.myQuantumChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.basis_vectors,
+                    labels: basis_vectors,  // X-axis: basis vectors
                     datasets: [{
-                        label: 'Probability Amplitude',
-                        data: probabilities,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        label: 'Quantum Statevector',
+                        data: magnitudes,  // Y-axis: magnitudes of the state vector
+                        backgroundColor: '#4b48d6',
+                        borderColor: '#3634d2',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            max: 1
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Quantum State Probabilities'
+                            beginAtZero: true
                         }
                     }
                 }
             });
+
+            // Display the calculation time
+            timeDiv.textContent = 'Calculation time: ' + calculationTime + ' ms';
         }
 
 
