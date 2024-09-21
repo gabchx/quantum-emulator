@@ -1,6 +1,6 @@
 // hook.rs
 use crate::logic::{Circuit, Gate, GateType};
-use rocket::serde::{json::Json, Deserialize};
+use rocket::serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct JSONCircuit {

@@ -1383,7 +1383,7 @@ ${usingCode}
             state.gates.push(newGate);
             addGate(newGate);
         }
-
+        const SERVER_URL = `${window.location.origin}/simulate`;
         function sendCircuitToServer() {
             var jsonCircuit = exportJSON(state);
 
@@ -1395,7 +1395,7 @@ ${usingCode}
 
             let startTime = Date.now();
 
-            fetch('http://127.0.0.1:8000/simulate', {
+            fetch(SERVER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

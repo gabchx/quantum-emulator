@@ -1,15 +1,13 @@
 #[macro_use]
 extern crate rocket;
 
-mod logic;
 mod hook;
+mod logic;
 
 use crate::hook::{convert_json_circuit, JSONCircuit};
-use crate::logic::Circuit;
 use rocket::serde::json::Json;
 use rocket::{fs::NamedFile, response::Redirect};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
-use std::path::PathBuf;
 use std::env;
 
 #[post("/simulate", format = "json", data = "<json_circuit>")]
@@ -18,7 +16,7 @@ async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     let circuit = convert_json_circuit(json_circuit.into_inner());
     let v = circuit.get_state_vector();
     let b = circuit.get_basis_vectors();
-    
+
     let v_serializable: Vec<(f64, f64)> = v.iter().map(|c| (c.re, c.im)).collect();
     let b_serializable: Vec<String> = b.iter().map(|s| s.clone()).collect();
 
@@ -50,13 +48,9 @@ async fn home() -> Result<NamedFile, std::io::Error> {
     NamedFile::open(path).await
 }
 
-
-
 #[launch]
 fn rocket() -> _ {
     use rocket::http::Method;
-    println!("Current working directory: {:?}", std::env::current_dir());
-
 
     let cors = CorsOptions::default()
         .allowed_origins(AllowedOrigins::all())
