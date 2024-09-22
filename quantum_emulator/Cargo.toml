@@ -1,0 +1,22 @@
+[package]
+name = "quantum_emulator"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Chaix <gabriel.chaix@edu.devinci.fr>", "Malo Leroy <malo.leroy@edu.devinci.fr>","Marine Jolibert <marine.jolibert@edu.devinci.fr>"]
+
+[[bin]]
+name = "quantum_emulator"
+src = "src/main.rs"
+path = "src/main.rs"
+
+[lib]
+name = "quantum_emulator"
+path = "src/lib.rs"
+
+[dependencies]
+nalgebra = "0.29.0"
+num-complex = "0.4.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rocket = { version = "0.5.1", features = ["json"] }
+rocket_cors = "0.6.0"
