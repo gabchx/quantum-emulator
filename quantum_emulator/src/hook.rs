@@ -16,7 +16,8 @@ pub struct JSONGate {
     pub t: usize,
     pub id: usize,
     pub theta: Option<String>,
-    pub thetaValue: Option<f64>,
+    #[serde(rename = "thetaValue")]
+    pub theta_value: Option<f64>,
     pub controls: Option<Vec<usize>>,
 }
 
@@ -35,19 +36,19 @@ pub fn parse_gate_type(json_gate: &JSONGate) -> Option<GateType> {
         "H" => Some(GateType::H),
         "T" => Some(GateType::T),
         "RX" => {
-            let theta = json_gate.thetaValue.unwrap_or_else(|| {
+            let theta = json_gate.theta_value.unwrap_or_else(|| {
                 parse_theta(&json_gate.theta.as_ref().expect("Theta value is missing"))
             });
             Some(GateType::Rx(theta))
         }
         "RY" => {
-            let theta = json_gate.thetaValue.unwrap_or_else(|| {
+            let theta = json_gate.theta_value.unwrap_or_else(|| {
                 parse_theta(&json_gate.theta.as_ref().expect("Theta value is missing"))
             });
             Some(GateType::Ry(theta))
         }
         "RZ" => {
-            let theta = json_gate.thetaValue.unwrap_or_else(|| {
+            let theta = json_gate.theta_value.unwrap_or_else(|| {
                 parse_theta(&json_gate.theta.as_ref().expect("Theta value is missing"))
             });
             Some(GateType::Rz(theta))
