@@ -11,8 +11,8 @@ use rocket::{fs::NamedFile, http::Method, response::Redirect};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use std::env;
 
-#[post("/simulate_rust", format = "json", data = "<json_circuit>")]
-async fn simulate_rust(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
+#[post("/simulate", format = "json", data = "<json_circuit>")]
+async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     let circuit = convert_json_circuit(json_circuit.into_inner());
     let v = circuit.get_state_vector();
     let b = circuit.get_basis_vectors();
@@ -28,8 +28,8 @@ async fn simulate_rust(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Valu
     Json(response)
 }
 
-#[options("/simulate_rust")]
-fn options_simulate_rust() -> &'static str {
+#[options("/simulate")]
+fn options_simulate() -> &'static str {
     ""
 }
 
@@ -72,9 +72,6 @@ fn rocket() -> _ {
     .expect("Error creating CORS");
 
     rocket::build()
-        .mount(
-            "/",
-            routes![simulate_rust, options_simulate_rust, index, home],
-        )
+        .mount("/", routes![simulate, options_simulate, index, home])
         .attach(cors)
 }

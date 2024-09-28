@@ -1,8 +1,6 @@
-# main.py
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-from logic import Circuit, convert_json_circuit
+from python_backend.logic import convert_json_circuit
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -26,5 +24,5 @@ def simulate():
 
     return jsonify(response)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def run():
+    app.run(debug=True, port=8001)

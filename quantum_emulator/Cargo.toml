@@ -6,12 +6,12 @@ authors = ["Gabriel Chaix <gabriel.chaix@edu.devinci.fr>", "Malo Leroy <malo.ler
 
 [[bin]]
 name = "quantum_emulator"
-src = "src/main.rs"
-path = "src/main.rs"
+src = "src/rust/main.rs"
+path = "src/rust/main.rs"
 
 [lib]
 name = "quantum_emulator"
-path = "src/lib.rs"
+path = "src/rust/lib.rs"
 
 [dependencies]
 nalgebra = "0.29.0"

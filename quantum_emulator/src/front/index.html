@@ -280,9 +280,11 @@
                 </select>
                 <button class="btn" onClick="showExport()">Code <i class="icon icon-resize-horiz"></i></button>
                 <button class="btn" onClick="showExamples()">Examples <i class="icon icon-apps"></i></button>
-                <button id="export-button" class="btn" onClick="addQubit()">Qubit <i class="icon icon-plus"></i></button>
+                <button id="export-button" class="btn" onClick="addQubit()">Qubit <i
+                        class="icon icon-plus"></i></button>
                 <!-- "Simulate Circuit" button -->
-                <button class="btn" onclick="sendCircuitToServer()">Simulate Circuit<i class="icon icon-arrow-left"></i></button>
+                <button class="btn" onclick="sendCircuitToServer()">Simulate Circuit<i
+                        class="icon icon-arrow-left"></i></button>
             </div>
         </section>
     </header>
@@ -1386,7 +1388,6 @@ ${usingCode}
             state.gates.push(newGate);
             addGate(newGate);
         }
-        // const SERVER_URL = `${window.location.origin}/simulate`;
 
         function sendCircuitToServer() {
             var jsonCircuit = exportJSON(state);
@@ -1404,9 +1405,11 @@ ${usingCode}
             const backend = backendSelect.value;
 
             // Set the server URL based on the selected backend
+            const BASE_URL = `${window.location.origin.replace(/:\d+$/, "")}`;
+
             const SERVER_URL = backend === 'python'
-                ? 'http://localhost:5000/simulate' 
-                : 'http://localhost:8000/simulate_rust';
+                ? BASE_URL + ':8001/simulate'
+                : BASE_URL + ':8000/simulate';
 
             fetch(SERVER_URL, {
                 method: 'POST',
@@ -1415,27 +1418,27 @@ ${usingCode}
                 },
                 body: JSON.stringify(jsonCircuit)
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(`Server responded with ${response.status}: ${text}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                let endTime = Date.now();
-                let calculationTime = endTime - startTime;
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Server responded with ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let endTime = Date.now();
+                    let calculationTime = endTime - startTime;
 
-                console.log('Simulation result:', data);
-                // Update the simulation results section
-                displaySimulationResults(data, calculationTime);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(`Error communicating with the ${backend} backend: ${error.message}`);
-                displaySimulationError(error);
-            });
+                    console.log('Simulation result:', data);
+                    // Update the simulation results section
+                    displaySimulationResults(data, calculationTime);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`Error communicating with the ${backend} backend: ${error.message}`);
+                    displaySimulationError(error);
+                });
         }
 
 
