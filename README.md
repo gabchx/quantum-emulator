@@ -21,7 +21,7 @@ Homemade quantum emulator, made with Rust.
  docker-compose up --build
 ```
 
-`http://0.0.0.0:8000/home`
+`http://127.0.0.1:8000/home`
 
 > Using rust and python separatly on your machine (for developpment)
 
@@ -38,8 +38,6 @@ cd quantum_emulator
 poetry install
 poetry run app
 ```
-
-`http://0.0.0.0:8000/home`
 
 ### To install docker compose
 
