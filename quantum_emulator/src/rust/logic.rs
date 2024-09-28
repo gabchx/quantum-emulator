@@ -114,7 +114,7 @@ impl Gate {
                 let mut matrices = Vec::new();
 
                 for q in 0..n_qubits {
-                    if self.qubits.contains(&q) {
+                    if self.qubits.contains(&(n_qubits - q - 1)) {
                         matrices.push(DMatrix::from_row_slice(2, 2, gate_matrix.as_slice()));
                     } else {
                         matrices.push(DMatrix::<Complex<f64>>::identity(2, 2));
@@ -139,7 +139,7 @@ impl Circuit {
 
         for gate in &self.gates {
             let u_gate = gate.get_full_unitary(self.n_qubits);
-            u = u_gate * u;
+            u = u * u_gate;
         }
 
         u
@@ -163,6 +163,16 @@ impl Circuit {
         }
 
         basis_vectors
+    }
+
+    pub fn get_state_probabilities(&self) -> Vec<f64> {
+        let state_vector = self.get_state_vector();
+        let probabilities: Vec<f64> = state_vector
+            .iter()
+            .map(|amplitude| amplitude.norm_sqr()) // Squaring the magnitude to get probability
+            .collect();
+
+        probabilities
     }
 }
 
@@ -212,4 +222,47 @@ pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatri
     }
 
     matrix
+}
+
+pub fn bloch_sphere_angles_per_qubit(
+    state_vector: &DMatrix<Complex<f64>>,
+    n_qubits: usize,
+) -> Vec<(f64, f64)> {
+    let mut angles = Vec::new();
+    let dim = state_vector.nrows();
+
+    for qubit in 0..n_qubits {
+        let (alpha, beta) = extract_single_qubit_amplitudes(state_vector, n_qubits, qubit);
+
+        // Compute Bloch angles only if alpha and beta are non-zero
+        if alpha.norm() > 0.0 || beta.norm() > 0.0 {
+            let theta = 2.0 * alpha.norm().acos();
+            let phi = beta.arg() - alpha.arg();
+            angles.push((theta, phi));
+        }
+    }
+
+    angles
+}
+
+fn extract_single_qubit_amplitudes(
+    state_vector: &DMatrix<Complex<f64>>,
+    n_qubits: usize,
+    target_qubit: usize,
+) -> (Complex<f64>, Complex<f64>) {
+    let dim = 1 << n_qubits;
+    let mut alpha = Complex::new(0.0, 0.0);
+    let mut beta = Complex::new(0.0, 0.0);
+
+    for i in 0..dim {
+        // Check if the target qubit is in state |0> or |1>
+        let qubit_state = (i >> target_qubit) & 1;
+        if qubit_state == 0 {
+            alpha += state_vector[(i, 0)];
+        } else {
+            beta += state_vector[(i, 0)];
+        }
+    }
+
+    (alpha, beta)
 }

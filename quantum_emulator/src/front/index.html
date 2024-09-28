@@ -255,13 +255,23 @@
         }
 
         #simulation-chart {
-            width: 60%;
+            width: 50%;
+        }
+
+        #probabilities-chart {
+            width: 50%;
         }
 
         /* Style for calculation time */
         #calculation-time {
             margin-top: 10px;
             font-size: 14px;
+        }
+
+        #bloch-sphere-container {
+            width: 40%;
+            height: 80px;
+            display: block;
         }
     </style>
 </head>
@@ -307,8 +317,15 @@
                 <div id="simulation-chart">
                     <canvas id="quantumChart" width="1000" height="170"></canvas>
                 </div>
+                <div id="probabilities-chart">
+                    <canvas id="quantumChart2" width="1000" height="170"></canvas>
+                </div>
             </div>
         </div>
+        <div id="bloch-sphere-container">
+            <!-- Bloch sphere will be displayed here -->
+        </div>
+    </div>
 
 
 
@@ -363,6 +380,9 @@
     </div>
     <!-- Include the math.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <!-- Include the three.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <!-- Draggable Library -->
     <script>
         // draggable https://github.com/bcherny/draggable/
@@ -1389,6 +1409,119 @@ ${usingCode}
             addGate(newGate);
         }
 
+        function createTextSprite(message, color) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = '32px Arial';
+            context.fillStyle = color;
+            context.fillText(message, 0, 32);
+
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(1, 0.5, 1); // Adjust size of the label
+            return sprite;
+        }
+
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 500);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, 400);
+        document.getElementById('bloch-sphere-container').appendChild(renderer.domElement);
+
+        // Create the Bloch sphere 
+        const sphereGeometry = new THREE.SphereGeometry(1, 26, 26);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x514f55, wireframe: true });
+        const blochSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        blochSphere.scale.set(2, 2, 2);
+
+        const axesHelper = new THREE.AxesHelper(2);
+
+        // Create a group to hold both the sphere and the axes
+        const group = new THREE.Group();
+        group.add(blochSphere);
+        group.add(axesHelper);
+        scene.add(group);
+
+        const xLabel = createTextSprite('X', 'red');
+        const yLabel = createTextSprite('Y', 'green');
+        const zLabel = createTextSprite('Z', 'blue');
+
+        xLabel.position.set(2.5, 0, 0);
+        yLabel.position.set(0, 2, 0);
+        zLabel.position.set(0, 0, 2);
+
+        group.add(xLabel);
+        group.add(yLabel);
+        group.add(zLabel);
+
+        // Function to plot the state vector on the Bloch sphere
+        function plotStateVector(theta, phi, index) {
+
+            const previousVector = scene.getObjectByName(`stateVector${index}`);
+            if (previousVector) {
+                scene.remove(previousVector);
+            }
+
+            // Calculate the Cartesian coordinates
+            const x = Math.sin(theta) * Math.cos(phi);
+            const y = Math.sin(theta) * Math.sin(phi);
+            const z = Math.cos(theta);
+
+            console.log(`Qubit ${index}: x = ${x}, y = ${y}, z = ${z}`);
+
+            // Create a line to represent the state vector
+            const material = new THREE.LineBasicMaterial({ color: 0x835dd4 });
+            const points = [];
+            points.push(new THREE.Vector3(0, 0, 0));
+            points.push(new THREE.Vector3(x, y, z));
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, material);
+            line.name = `stateVector${index}`;
+
+            // Add the state vector to the scene
+            scene.add(line);
+            group.add(line);
+        }
+
+        // Set the camera position
+        camera.position.z = 3.75;
+
+        let isDragging = false;
+
+        // Event listeners for mouse actions
+        window.addEventListener('mousedown', (event) => {
+            isDragging = true;
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            isDragging = false;
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: event.offsetX - previousMousePosition.x,
+                    y: event.offsetY - previousMousePosition.y,
+                };
+
+                group.rotation.y += deltaMove.x * 0.01;
+                group.rotation.x += deltaMove.y * 0.01;
+            }
+
+            previousMousePosition = { x: event.offsetX, y: event.offsetY };
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        const SERVER_URL = `${window.location.origin}/simulate`;
         function sendCircuitToServer() {
             var jsonCircuit = exportJSON(state);
 
@@ -1443,11 +1576,19 @@ ${usingCode}
 
 
         function displaySimulationResults(data, calculationTime) {
+
+            console.log('Simulation data:', data); // Log the data object for debugging
+
             let resultsDiv = document.getElementById('simulation-results');
             let timeDiv = document.getElementById('calculation-time');
 
             // Extract basis_vectors and state_vector from data
-            const { basis_vectors, state_vector } = data;
+            const { basis_vectors, state_vector, probabilities, bloch_angles } = data;
+
+            /*if (!Array.isArray(bloch_angles)) {
+                console.error('bloch_angles is not defined or not an array');
+                return;
+            }*/
 
             // Calculate magnitudes (|amplitude| = sqrt(real^2 + imag^2))
             const magnitudes = state_vector.map(amplitude => {
@@ -1456,9 +1597,25 @@ ${usingCode}
                 return Math.sqrt(real * real + imag * imag);
             });
 
+            // Plot the state vectors on the Bloch sphere
+            /*bloch_angles.forEach((angles, index) => {
+                const [theta, phi] = angles;
+                plotStateVector(theta, phi, index);
+            });*/
+            bloch_angles.forEach((angle, index) => {
+                const [theta, phi] = angle;
+
+                if (theta !== 0 || phi !== 0) {
+                    plotStateVector(theta, phi, index);
+                }
+            });
+
             // Destroy the previous chart instance if it exists (to avoid stacking multiple charts)
             if (window.myQuantumChart) {
                 window.myQuantumChart.destroy();
+            }
+            if (window.myQuantumChart2) {
+                window.myQuantumChart2.destroy();
             }
 
             // Create the Chart.js bar chart
@@ -1483,6 +1640,30 @@ ${usingCode}
                     }
                 }
             });
+
+
+            const cp = document.getElementById('quantumChart2').getContext('2d');
+            window.myQuantumChart2 = new Chart(cp, {
+                type: 'bar',
+                data: {
+                    labels: basis_vectors,  // X-axis: basis vectors
+                    datasets: [{
+                        label: 'Probabilities',
+                        data: probabilities,  // Y-axis: magnitudes of the state vector
+                        backgroundColor: '#4fcbe1',
+                        borderColor: '#49bcd1',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
 
             // Display the calculation time
             timeDiv.textContent = 'Calculation time: ' + calculationTime + ' ms';
