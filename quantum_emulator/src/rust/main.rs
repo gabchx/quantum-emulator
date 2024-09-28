@@ -34,8 +34,8 @@ async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     Json(response)
 }
 
-#[options("/simulate_rust")]
-fn options_simulate_rust() -> &'static str {
+#[options("/simulate")]
+fn options_simulate() -> &'static str {
     ""
 }
 
@@ -78,9 +78,6 @@ fn rocket() -> _ {
     .expect("Error creating CORS");
 
     rocket::build()
-        .mount(
-            "/",
-            routes![simulate_rust, options_simulate_rust, index, home],
-        )
+        .mount("/", routes![simulate, options_simulate, index, home])
         .attach(cors)
 }
