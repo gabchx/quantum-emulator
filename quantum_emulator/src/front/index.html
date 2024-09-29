@@ -273,6 +273,13 @@
             height: 80px;
             display: block;
         }
+
+        .label {
+            position: absolute;
+            color: white;
+            font-size: 16px;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -1412,7 +1419,7 @@ ${usingCode}
         function createTextSprite(message, color) {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-            context.font = '32px Arial';
+            context.font = '38px Arial';
             context.fillStyle = color;
             context.fillText(message, 0, 32);
 
@@ -1421,12 +1428,13 @@ ${usingCode}
 
             const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
             const sprite = new THREE.Sprite(spriteMaterial);
-            sprite.scale.set(1, 0.5, 1); // Adjust size of the label
+            sprite.scale.set(1, 0.5, 1);
             return sprite;
         }
 
         // Set up the scene, camera, and renderer
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 500);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, 400);
@@ -1438,46 +1446,81 @@ ${usingCode}
         const blochSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         blochSphere.scale.set(2, 2, 2);
 
-        const axesHelper = new THREE.AxesHelper(2);
+        // Set axes helper
+        const axisMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+        const xAxisPoints = [
+            new THREE.Vector3(-2, 0, 0),
+            new THREE.Vector3(2, 0, 0)
+        ];
+        const yAxisPoints = [
+            new THREE.Vector3(0, -2, 0),
+            new THREE.Vector3(0, 2, 0)
+        ];
+        const zAxisPoints = [
+            new THREE.Vector3(0, 0, -2),
+            new THREE.Vector3(0, 0, 2)
+        ];
+        const negZLinePoints = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, -2, 0)
+        ];
+
+        const xAxisGeometry = new THREE.BufferGeometry().setFromPoints(xAxisPoints);
+        const yAxisGeometry = new THREE.BufferGeometry().setFromPoints(yAxisPoints);
+        const zAxisGeometry = new THREE.BufferGeometry().setFromPoints(zAxisPoints);
+        const negZLineGeometry = new THREE.BufferGeometry().setFromPoints(negZLinePoints);
+
+        const xAxis = new THREE.Line(xAxisGeometry, axisMaterial);
+        const yAxis = new THREE.Line(yAxisGeometry, axisMaterial);
+        const zAxis = new THREE.Line(zAxisGeometry, axisMaterial);
+        const negZAxis = new THREE.Line(negZLineGeometry, axisMaterial);
 
         // Create a group to hold both the sphere and the axes
         const group = new THREE.Group();
         group.add(blochSphere);
-        group.add(axesHelper);
+        group.add(xAxis);
+        group.add(yAxis);
+        group.add(zAxis);
+        group.add(negZAxis);
         scene.add(group);
 
-        const xLabel = createTextSprite('X', 'red');
-        const yLabel = createTextSprite('Y', 'green');
-        const zLabel = createTextSprite('Z', 'blue');
+        const xLabel = createTextSprite('X', 'white');
+        const zLabel = createTextSprite('|0⟩', 'white');
+        const yLabel = createTextSprite('Y', 'white');
+        const negZLabel = createTextSprite('|1⟩', 'white');
 
-        xLabel.position.set(2.5, 0, 0);
-        yLabel.position.set(0, 2, 0);
-        zLabel.position.set(0, 0, 2);
+        xLabel.position.set(2, 0, 0);
+        zLabel.position.set(0, 2, 0);
+        yLabel.position.set(0, 0, 1.5);
+        negZLabel.position.set(0, -2.25, 0);
 
         group.add(xLabel);
-        group.add(yLabel);
         group.add(zLabel);
+        group.add(yLabel);
+        group.add(negZLabel);
 
         // Function to plot the state vector on the Bloch sphere
         function plotStateVector(theta, phi, index) {
 
             const previousVector = scene.getObjectByName(`stateVector${index}`);
-            if (previousVector) {
-                scene.remove(previousVector);
-            }
+            const previousLabel = scene.getObjectByName(`stateVectorLabel${index}`);
+            if (previousVector) scene.remove(previousVector);
+            if (previousLabel) scene.remove(previousLabel);
 
             // Calculate the Cartesian coordinates
-            const x = Math.sin(theta) * Math.cos(phi);
-            const y = Math.sin(theta) * Math.sin(phi);
-            const z = Math.cos(theta);
+            const length = 2; // Match the size of the Bloch sphere
+            const x = length * Math.sin(theta) * Math.cos(phi);
+            const y = length * Math.sin(theta) * Math.sin(phi);
+            const z = length * Math.cos(theta);
 
             console.log(`Qubit ${index}: x = ${x}, y = ${y}, z = ${z}`);
 
             // Create a line to represent the state vector
-            const material = new THREE.LineBasicMaterial({ color: 0x835dd4 });
+            const material = new THREE.LineBasicMaterial({ color: 0x4951c2 });
             const points = [];
             points.push(new THREE.Vector3(0, 0, 0));
-            points.push(new THREE.Vector3(x, y, z));
+            points.push(new THREE.Vector3(x, z, y));
             const geometry = new THREE.BufferGeometry().setFromPoints(points);
             const line = new THREE.Line(geometry, material);
             line.name = `stateVector${index}`;
@@ -1485,6 +1528,11 @@ ${usingCode}
             // Add the state vector to the scene
             scene.add(line);
             group.add(line);
+
+            const vectorLabel = createTextSprite(`q[${index}]`, '#4951c2');
+            vectorLabel.position.set(x * 1.25, z * 1.25, y * 1.25);
+            vectorLabel.name = `stateVectorLabel${index}`;
+            group.add(vectorLabel);
         }
 
         // Set the camera position
@@ -1585,11 +1633,6 @@ ${usingCode}
             // Extract basis_vectors and state_vector from data
             const { basis_vectors, state_vector, probabilities, bloch_angles } = data;
 
-            /*if (!Array.isArray(bloch_angles)) {
-                console.error('bloch_angles is not defined or not an array');
-                return;
-            }*/
-
             // Calculate magnitudes (|amplitude| = sqrt(real^2 + imag^2))
             const magnitudes = state_vector.map(amplitude => {
                 const real = amplitude[0];
@@ -1598,10 +1641,6 @@ ${usingCode}
             });
 
             // Plot the state vectors on the Bloch sphere
-            /*bloch_angles.forEach((angles, index) => {
-                const [theta, phi] = angles;
-                plotStateVector(theta, phi, index);
-            });*/
             bloch_angles.forEach((angle, index) => {
                 const [theta, phi] = angle;
 
