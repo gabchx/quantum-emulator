@@ -229,17 +229,25 @@ pub fn bloch_sphere_angles_per_qubit(
     n_qubits: usize,
 ) -> Vec<(f64, f64)> {
     let mut angles = Vec::new();
-    let dim = state_vector.nrows();
 
     for qubit in 0..n_qubits {
         let (alpha, beta) = extract_single_qubit_amplitudes(state_vector, n_qubits, qubit);
 
-        // Compute Bloch angles only if alpha and beta are non-zero
-        if alpha.norm() > 0.0 || beta.norm() > 0.0 {
-            let theta = 2.0 * alpha.norm().acos();
-            let phi = beta.arg() - alpha.arg();
-            angles.push((theta, phi));
+        // Compute Bloch angles
+        let theta;
+        if beta.norm() == 0.0 {
+            // Qubit is in |0> state
+            theta = 0.0;
+        } else if alpha.norm() == 0.0 {
+            // Qubit is in |1> state
+            theta = std::f64::consts::PI;
+        } else {
+            // General case
+            theta = 2.0 * alpha.norm().acos();
         }
+
+        let phi = beta.arg() - alpha.arg();
+        angles.push((theta, phi));
     }
 
     angles
@@ -255,7 +263,6 @@ fn extract_single_qubit_amplitudes(
     let mut beta = Complex::new(0.0, 0.0);
 
     for i in 0..dim {
-        // Check if the target qubit is in state |0> or |1>
         let qubit_state = (i >> target_qubit) & 1;
         if qubit_state == 0 {
             alpha += state_vector[(i, 0)];
