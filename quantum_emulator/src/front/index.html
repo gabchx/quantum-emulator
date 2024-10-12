@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quantum Computing Circuit Designer</title>
+    <title>Quantum Computing Circuit Emulator</title>
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,6 +62,7 @@
         }
 
         #main {
+            position: relative;
             background-color: transparent;
             background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);
             height: 100%;
@@ -77,15 +78,16 @@
         .gate {
             background-color: #333;
             width: 46px;
-            /* border 1px each side */
             height: 46px;
             border: 1px solid #666;
             font-family: Arial, Helvetica, sans-serif;
-            z-index: 100;
-            -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
-            -moz-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            z-index: 400;
+            /* Increased from 100 to 400 */
             box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            position: absolute;
+            /* Ensure absolute positioning */
         }
+
 
         .gate-placeholder {
             border: 2px dashed white !important;
@@ -165,7 +167,7 @@
 
         .SWAP:before {
             content: "SWAP";
-            font-size: 1.1em;
+            font-size: 0.9em;
         }
 
         .Q:before {
@@ -186,12 +188,22 @@
         }
 
         .cnot-line {
+            position: absolute;
             z-index: 50;
+        }
+
+        .cnot-circle {
+            z-index: 60;
+            position: absolute;
+            background-color: #bbb;
+            border-radius: 50%;
+            /* Other styling properties */
         }
 
         .swap-line {
             z-index: 50;
         }
+
 
         /* Styles for rotation gates */
         .rotation-gate {
@@ -226,10 +238,16 @@
             /* Adjust for navbar height */
         }
 
+        #gate-section {
+            position: relative;
+            height: 50px;
+        }
+
         #circuit-designer {
             flex: 9;
             position: relative;
             overflow: auto;
+            z-index: 400;
         }
 
         #simulation-section {
@@ -241,8 +259,19 @@
             margin-top: 20px;
         }
 
+        .simulation-section-title {
+            text-align: left;
+
+            font-size: 20px;
+            color: #ffffff;
+            margin: 0;
+            padding: 10px;
+            background-color: #333;
+        }
+
         #calculation-time {
             text-align: left;
+            padding: 10px;
             font-size: 14px;
             color: #ffffff;
             margin: 0;
@@ -301,6 +330,9 @@
         <section class="navbar-section">
             <h1 class="navbar-brand mr-2 text-light ml-2">Quantum Computing Circuit Designer</h1>
         </section>
+        <div id="gate-tool-box">
+            <!-- Existing main content will be rendered here -->
+        </div>
         <section class="navbar-section">
             <div class="input-group input-inline">
                 <button class="btn" onClick="showExport()">Code <i class="icon icon-resize-horiz"></i></button>
@@ -314,6 +346,9 @@
         </section>
     </header>
     <div id="container">
+        <div id="gate-section">
+
+        </div>
         <div id="circuit-designer">
             <div id="main">
                 <!-- Existing main content will be rendered here -->
@@ -321,7 +356,7 @@
         </div>
 
         <div id="simulation-section">
-            <h2>Simulation Results</h2>
+            <h2 class="simulation-section-title">Simulation Results</h2>
             <div id="calculation-time">
                 <!-- Calculation time will be displayed here -->
             </div>
@@ -342,8 +377,7 @@
         </div>
     </div>
 
-
-
+    <!-- Footer Section -->
 
     </div>
     <!-- EXPORT MODAL DIALOG -->
@@ -475,9 +509,6 @@
                         // Create 1/sqrt(2)(|00> + |11>)
                         { type: "H", q: 0, t: 1 },
                         { type: "CNOT", q: 1, t: 2, controls: [0] },
-                        // Measure
-                        { type: "M", q: 0, t: 3 },
-                        { type: "M", q: 1, t: 3 }
                     ]
                 }
             },
@@ -493,10 +524,6 @@
                         {
                             text: 'Alice is relating her bit with CNOT on bridge',
                             t: [3, 4]
-                        },
-                        {
-                            text: 'Measurement',
-                            t: [5, 6]
                         }
                     ],
                     qubits: 3,
@@ -513,10 +540,7 @@
                         // Alice - Relate her qubit with CNOT
                         { type: "CNOT", q: 1, t: 4, controls: [0] },
                         // Then apply H on her qubit 
-                        { type: "H", q: 0, t: 5 },
-                        // Measure - 3rd bit no need to measure, discard
-                        { type: "M", q: 0, t: 7 },
-                        { type: "M", q: 1, t: 7 }
+                        { type: "H", q: 0, t: 5 }
                     ]
                 }
             },
@@ -548,10 +572,7 @@
                         { type: "X", q: 1, t: 1 },
                         { type: "H", q: 1, t: 2 },
                         // Oracle e.g. Identity, balanced function
-                        { type: "CNOT", q: 1, t: 3, controls: [0] },
-                        // Measure
-                        { type: "M", q: 0, t: 4 },
-                        { type: "M", q: 1, t: 4 }
+                        { type: "CNOT", q: 1, t: 3, controls: [0] }
                     ]
                 }
             }
@@ -585,14 +606,13 @@
         }
 
         function renderToolbar() {
-            let toolbarElem = document.getElementById('main');
+            let toolbarElem = document.getElementById('gate-tool-box');
             toolbarGates.forEach((tgate) => {
                 let toolbarGate = createGate(tgate);
                 toolbarElem.appendChild(toolbarGate);
                 let options = {
                     grid: gridSize,
                     setCursor: true,
-                    smoothDrag: false,
                     smoothDrag: true,
                     onDragStart: startDragToolbarGate,
                     onDrag: updateToolbarGate,
@@ -601,9 +621,6 @@
                 let drag = new Draggable(toolbarGate, options);
                 drag.set(tgate.x, tgate.y);
                 gateRefs['gate-toolbar-' + tgate.type] = drag;
-
-                let toolbarPlaceholder = createPlaceholder(tgate.x, tgate.y);
-                toolbarElem.append(toolbarPlaceholder);
             });
         }
 
@@ -619,9 +636,16 @@
         function endDragToolbarGate(element, x, y, ev) {
             let tgateElem = gateRefs['gate-toolbar-' + element.dataset.type];
 
-            // add new gate
-            let t = getT(x);
-            let q = getQ(y);
+            // Get the bounding rectangle of the main area
+            let mainRect = document.getElementById('main').getBoundingClientRect();
+
+            // Calculate the drop position relative to the main area
+            let dropX = ev.clientX - mainRect.left;
+            let dropY = ev.clientY - mainRect.top;
+
+            // Convert drop coordinates to grid positions
+            let t = getT(dropX);
+            let q = getQ(dropY);
 
             if (tgateElem.element.dataset.type === 'CNOT') {
                 // For CNOT gates, check if any gate exists at time t
@@ -1055,6 +1079,12 @@
                     if (swapLine) {
                         swapLine.parentNode.removeChild(swapLine);
                     }
+
+                    // Remove SWAP X if it exists
+                    let swapX = document.getElementById('swap-x-' + id);
+                    if (swapX) {
+                        swapX.parentNode.removeChild(swapX);
+                    }
                 }
             }
         }
@@ -1068,16 +1098,6 @@
             let y1 = getY(controlQubit) + 23;
             let y2 = getY(targetQubit) + 23;
 
-            let line = document.createElement('div');
-            line.className = 'cnot-line';
-            line.style.position = 'absolute';
-            line.style.left = x + 'px';
-            line.style.top = Math.min(y1, y2) + 'px';
-            line.style.width = '4px';
-            line.style.height = Math.abs(y2 - y1) + 'px';
-            line.style.backgroundColor = '#333';
-            line.id = 'cnot-line-' + gate.id;
-
             // Create a filled circle at the control qubit
             let circle = document.createElement('div');
             circle.className = 'cnot-circle';
@@ -1090,8 +1110,18 @@
             circle.style.borderRadius = '50%';
             circle.id = 'cnot-circle-' + gate.id;
 
-            document.getElementById('main').appendChild(circle);
+            let line = document.createElement('div');
+            line.className = 'cnot-line';
+            line.style.position = 'absolute';
+            line.style.left = (x - 2) + 'px';
+            line.style.top = Math.min(y1, y2) + 'px';
+            line.style.width = '4px';
+            line.style.height = Math.abs(y2 - y1) + 'px';
+            line.style.backgroundColor = '#333';
+            line.id = 'cnot-line-' + gate.id;
+
             document.getElementById('main').appendChild(line);
+            document.getElementById('main').appendChild(circle);
 
         }
 
@@ -1114,7 +1144,22 @@
             line.style.backgroundColor = '#333';
             line.id = 'swap-line-' + gate.id;
 
+            let xSymbol = document.createElement('div');
+            xSymbol.className = 'swap-x';
+            xSymbol.style.position = 'absolute';
+            xSymbol.style.left = (x - 10) + 'px';
+            xSymbol.style.top = (y2 - 10) + 'px';
+            xSymbol.style.width = '20px';
+            xSymbol.style.height = '20px';
+            xSymbol.style.color = '#bbb';
+            xSymbol.style.fontSize = '28px';
+            xSymbol.style.textAlign = 'center';
+            xSymbol.style.lineHeight = '20px';
+            xSymbol.innerHTML = '✖';
+            xSymbol.id = 'swap-x-' + gate.id;
+
             document.getElementById('main').appendChild(line);
+            document.getElementById('main').appendChild(xSymbol);
         }
 
         function createPlaceholder(x, y, className, t = -1, q = -1) {
@@ -1212,7 +1257,7 @@
                     if (cnotLine) {
                         cnotLine.parentNode.removeChild(cnotLine);
                     }
-                    let cnotCircle = document.getElementById('cnot-circle-' + id);
+                    let cnotCircle = document.getElementById('circle-' + id);
                     if (cnotCircle) {
                         cnotCircle.parentNode.removeChild(cnotCircle);
                     }
@@ -1224,6 +1269,10 @@
                     let swapLine = document.getElementById('swap-line-' + id);
                     if (swapLine) {
                         swapLine.parentNode.removeChild(swapLine);
+                    }
+                    let swapX = document.getElementById('swap-x-' + id);
+                    if (swapX) {
+                        swapX.parentNode.removeChild(swapX);
                     }
                     drawSWAPLine(state.gates[idx]);
                 }
@@ -1256,15 +1305,14 @@
             return offsetTop + q * gridSize;
         }
 
-        // translate screen coord x to evolution timeline t
         function getT(x) {
-            return (x - offsetLeft) / gridSize;
+            return Math.round((x - offsetLeft) / gridSize);
         }
 
-        // translate screen coord y to qubits position q
         function getQ(y) {
-            return (y - offsetTop) / gridSize;
+            return Math.round((y - offsetTop) / gridSize);
         }
+
 
         // Export functions
         function exportQASM(data) {
@@ -1857,7 +1905,6 @@ ${usingCode}
             timeDiv.textContent = '';
         }
     </script>
-
 </body>
 
 </html>
