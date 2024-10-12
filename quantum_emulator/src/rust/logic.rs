@@ -218,98 +218,47 @@ pub fn kronecker_product(
     result
 }
 
-/*pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatrix<Complex<f64>> {
-    let dim = 1 << n_qubits;
-    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
-
-    for i in 0..dim {
-        //let mut bits = (0..n_qubits).map(|q| (i >> q) & 1).collect::<Vec<_>>();
-        let mut bits = (0..n_qubits)
-            .map(|q| (i >> (n_qubits - q - 1)) & 1)
-            .collect::<Vec<_>>();
-
-        if bits[control] == 1 {
-            bits[target] ^= 1;
-        }
-
-        let j = bits
-            .iter()
-            .enumerate()
-            .fold(0, |acc, (q, &bit)| acc | (bit << q));
-
-        matrix[(j, i)] = Complex::new(1.0, 0.0);
-    }
-
-    matrix
-}*/
-
-/*pub fn get_swap_matrix(n_qubits: usize, qubit1: usize, qubit2: usize) -> DMatrix<Complex<f64>> {
-    let dim = 1 << n_qubits;
-    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
-
-    for i in 0..dim {
-        //let mut bits = (0..n_qubits).map(|q| (i >> q) & 1).collect::<Vec<_>>();
-        let mut bits = (0..n_qubits)
-            .map(|q| (i >> (n_qubits - q - 1)) & 1)
-            .collect::<Vec<_>>();
-
-        bits.swap(qubit1, qubit2);
-
-        let j = bits
-            .iter()
-            .enumerate()
-            .fold(0, |acc, (q, &bit)| acc | (bit << q));
-
-        matrix[(j, i)] = Complex::new(1.0, 0.0);
-    }
-
-    matrix
-}*/
-
 pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatrix<Complex<f64>> {
     let dim = 1 << n_qubits;
-    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
+    let mut cnot_matrix = DMatrix::<Complex<f64>>::from_element(dim, dim, Complex::new(0.0, 0.0));
 
     for i in 0..dim {
-        let mut bits = (0..n_qubits)
-            .map(|q| (i >> (n_qubits - q - 1)) & 1)
-            .collect::<Vec<_>>();
+        let mut modified_i = i;
 
-        if bits[control] == 1 {
-            bits[target] ^= 1;
+        // Le bit de contrôle est extrait
+        let control_bit = (i >> control) & 1;
+
+        // Si le bit de contrôle est à 1, on inverse le bit cible
+        if control_bit == 1 {
+            modified_i ^= 1 << target; // Inversion du bit cible
         }
 
-        let j = bits
-            .iter()
-            .enumerate()
-            .fold(0, |acc, (q, &bit)| acc | (bit << (n_qubits - q - 1)));
-
-        matrix[(j, i)] = Complex::new(1.0, 0.0);
+        // Placer un 1 dans la matrice pour représenter cette transition
+        cnot_matrix[(i, modified_i)] = Complex::new(1.0, 0.0);
     }
 
-    matrix
+    cnot_matrix
 }
 
-pub fn get_swap_matrix(n_qubits: usize, qubit1: usize, qubit2: usize) -> DMatrix<Complex<f64>> {
-    let dim = 1 << n_qubits;
-    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
+pub fn get_swap_matrix(num_qubits: usize, qubit1: usize, qubit2: usize) -> DMatrix<Complex<f64>> {
+    let dim = 1 << num_qubits;
+    let mut swap_matrix = DMatrix::<Complex<f64>>::from_element(dim, dim, Complex::new(0.0, 0.0));
 
     for i in 0..dim {
-        let mut bits = (0..n_qubits)
-            .map(|q| (i >> (n_qubits - q - 1)) & 1)
-            .collect::<Vec<_>>();
+        let mut swapped_i = i;
 
-        bits.swap(qubit1, qubit2);
+        let bit_a = (i >> qubit1) & 1;
+        let bit_b = (i >> qubit2) & 1;
 
-        let j = bits
-            .iter()
-            .enumerate()
-            .fold(0, |acc, (q, &bit)| acc | (bit << (n_qubits - q - 1)));
+        if bit_a != bit_b {
+            swapped_i ^= 1 << qubit1;
+            swapped_i ^= 1 << qubit2;
+        }
 
-        matrix[(j, i)] = Complex::new(1.0, 0.0);
+        swap_matrix[(i, swapped_i)] = Complex::new(1.0, 0.0);
     }
 
-    matrix
+    swap_matrix
 }
 
 pub fn bloch_sphere_angles_per_qubit(
