@@ -224,16 +224,12 @@ pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatri
 
     for i in 0..dim {
         let mut modified_i = i;
-
-        // Le bit de contrôle est extrait
         let control_bit = (i >> control) & 1;
 
-        // Si le bit de contrôle est à 1, on inverse le bit cible
         if control_bit == 1 {
-            modified_i ^= 1 << target; // Inversion du bit cible
+            modified_i ^= 1 << target;
         }
 
-        // Placer un 1 dans la matrice pour représenter cette transition
         cnot_matrix[(i, modified_i)] = Complex::new(1.0, 0.0);
     }
 

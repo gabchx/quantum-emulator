@@ -226,10 +226,15 @@
             /* Adjust for navbar height */
         }
 
+        #gate-section {
+            position: relative;
+            height: 50px;
+        }
+
         #circuit-designer {
             flex: 9;
             position: relative;
-            overflow: auto;
+            overflow: scroll;
         }
 
         #simulation-section {
@@ -314,6 +319,9 @@
         </section>
     </header>
     <div id="container">
+        <div id="gate-section">
+
+        </div>
         <div id="circuit-designer">
             <div id="main">
                 <!-- Existing main content will be rendered here -->
@@ -585,7 +593,7 @@
         }
 
         function renderToolbar() {
-            let toolbarElem = document.getElementById('main');
+            let toolbarElem = document.getElementById('gate-section');
             toolbarGates.forEach((tgate) => {
                 let toolbarGate = createGate(tgate);
                 toolbarElem.appendChild(toolbarGate);
@@ -1258,12 +1266,14 @@
 
         // translate screen coord x to evolution timeline t
         function getT(x) {
-            return (x - offsetLeft) / gridSize;
+            const scrollLeft = document.getElementById('circuit-designer').scrollLeft;
+            return Math.round((x + scrollLeft - offsetLeft) / gridSize);
         }
 
         // translate screen coord y to qubits position q
         function getQ(y) {
-            return (y - offsetTop) / gridSize;
+            const scrollTop = document.getElementById('circuit-designer').scrollTop;
+            return Math.round((y + scrollTop - offsetTop) / gridSize);
         }
 
         // Export functions
