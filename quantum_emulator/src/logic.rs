@@ -15,6 +15,7 @@ pub enum GateType {
     Ry(f64),
     Rz(f64),
     CNOT,
+    SWAP,
 }
 
 #[derive(Clone, Debug)]
@@ -97,6 +98,9 @@ impl GateType {
             GateType::CNOT => {
                 panic!("CNOT gate is not a single-qubit gate.");
             }
+            GateType::SWAP => {
+                panic!("SWAP gate is not a single-qubit gate.");
+            }
         }
     }
 }
@@ -107,12 +111,22 @@ impl Gate {
             GateType::CNOT => {
                 let control = self.qubits[0];
                 let target = self.qubits[1];
+                println!("oui");
                 get_cnot_matrix(n_qubits, control, target)
+            }
+            GateType::SWAP => {
+                let qubit1 = self.qubits[0];
+                let qubit2 = self.qubits[1];
+                println!("swap matrix");
+                println!("{:?}", qubit1);
+                println!("{:?}", qubit2);
+                get_swap_matrix(n_qubits, qubit1, qubit2)
             }
             _ => {
                 let gate_matrix = self.gate_type.unitary_matrix();
                 let mut matrices = Vec::new();
 
+                println!("{:?}", &self.gate_type);
                 for q in 0..n_qubits {
                     if self.qubits.contains(&(n_qubits - q - 1)) {
                         matrices.push(DMatrix::from_row_slice(2, 2, gate_matrix.as_slice()));
@@ -137,11 +151,13 @@ impl Circuit {
         let dim = 1 << self.n_qubits;
         let mut u = DMatrix::<Complex<f64>>::identity(dim, dim);
 
+        println!("Initial state:\n{:?}", u);
         for gate in &self.gates {
             let u_gate = gate.get_full_unitary(self.n_qubits);
-            u = u * u_gate;
+            u = u_gate * u;
         }
 
+        println!("Initial state:\n{:?}", u);
         u
     }
 
@@ -169,7 +185,7 @@ impl Circuit {
         let state_vector = self.get_state_vector();
         let probabilities: Vec<f64> = state_vector
             .iter()
-            .map(|amplitude| amplitude.norm_sqr()) // Squaring the magnitude to get probability
+            .map(|amplitude| amplitude.norm_sqr()) // Squaring the amplitude to get probability
             .collect();
 
         probabilities
@@ -202,12 +218,15 @@ pub fn kronecker_product(
     result
 }
 
-pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatrix<Complex<f64>> {
+/*pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatrix<Complex<f64>> {
     let dim = 1 << n_qubits;
     let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
 
     for i in 0..dim {
-        let mut bits = (0..n_qubits).map(|q| (i >> q) & 1).collect::<Vec<_>>();
+        //let mut bits = (0..n_qubits).map(|q| (i >> q) & 1).collect::<Vec<_>>();
+        let mut bits = (0..n_qubits)
+            .map(|q| (i >> (n_qubits - q - 1)) & 1)
+            .collect::<Vec<_>>();
 
         if bits[control] == 1 {
             bits[target] ^= 1;
@@ -217,6 +236,75 @@ pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatri
             .iter()
             .enumerate()
             .fold(0, |acc, (q, &bit)| acc | (bit << q));
+
+        matrix[(j, i)] = Complex::new(1.0, 0.0);
+    }
+
+    matrix
+}*/
+
+/*pub fn get_swap_matrix(n_qubits: usize, qubit1: usize, qubit2: usize) -> DMatrix<Complex<f64>> {
+    let dim = 1 << n_qubits;
+    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
+
+    for i in 0..dim {
+        //let mut bits = (0..n_qubits).map(|q| (i >> q) & 1).collect::<Vec<_>>();
+        let mut bits = (0..n_qubits)
+            .map(|q| (i >> (n_qubits - q - 1)) & 1)
+            .collect::<Vec<_>>();
+
+        bits.swap(qubit1, qubit2);
+
+        let j = bits
+            .iter()
+            .enumerate()
+            .fold(0, |acc, (q, &bit)| acc | (bit << q));
+
+        matrix[(j, i)] = Complex::new(1.0, 0.0);
+    }
+
+    matrix
+}*/
+
+pub fn get_cnot_matrix(n_qubits: usize, control: usize, target: usize) -> DMatrix<Complex<f64>> {
+    let dim = 1 << n_qubits;
+    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
+
+    for i in 0..dim {
+        let mut bits = (0..n_qubits)
+            .map(|q| (i >> (n_qubits - q - 1)) & 1)
+            .collect::<Vec<_>>();
+
+        if bits[control] == 1 {
+            bits[target] ^= 1;
+        }
+
+        let j = bits
+            .iter()
+            .enumerate()
+            .fold(0, |acc, (q, &bit)| acc | (bit << (n_qubits - q - 1)));
+
+        matrix[(j, i)] = Complex::new(1.0, 0.0);
+    }
+
+    matrix
+}
+
+pub fn get_swap_matrix(n_qubits: usize, qubit1: usize, qubit2: usize) -> DMatrix<Complex<f64>> {
+    let dim = 1 << n_qubits;
+    let mut matrix = DMatrix::<Complex<f64>>::zeros(dim, dim);
+
+    for i in 0..dim {
+        let mut bits = (0..n_qubits)
+            .map(|q| (i >> (n_qubits - q - 1)) & 1)
+            .collect::<Vec<_>>();
+
+        bits.swap(qubit1, qubit2);
+
+        let j = bits
+            .iter()
+            .enumerate()
+            .fold(0, |acc, (q, &bit)| acc | (bit << (n_qubits - q - 1)));
 
         matrix[(j, i)] = Complex::new(1.0, 0.0);
     }
