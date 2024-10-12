@@ -5,7 +5,6 @@ mod hook;
 mod logic;
 
 use crate::hook::{convert_json_circuit, JSONCircuit};
-use crate::logic::bloch_sphere_angles_per_qubit;
 use rocket::serde::json::Json;
 use rocket::{fs::NamedFile, response::Redirect};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
@@ -17,18 +16,13 @@ async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     let circuit = convert_json_circuit(json_circuit.into_inner());
     let v = circuit.get_state_vector();
     let b = circuit.get_basis_vectors();
-    let p = circuit.get_state_probabilities();
 
     let v_serializable: Vec<(f64, f64)> = v.iter().map(|c| (c.re, c.im)).collect();
     let b_serializable: Vec<String> = b.iter().map(|s| s.clone()).collect();
 
-    let bloch_angles = bloch_sphere_angles_per_qubit(&v, circuit.n_qubits);
-
     let response = serde_json::json!({
         "state_vector": v_serializable,
         "basis_vectors": b_serializable,
-        "probabilities": p,
-        "bloch_angles": bloch_angles,
     });
 
     Json(serde_json::json!(response))
