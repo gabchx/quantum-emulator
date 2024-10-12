@@ -1063,6 +1063,12 @@
                     if (swapLine) {
                         swapLine.parentNode.removeChild(swapLine);
                     }
+
+                    // Remove SWAP X if it exists
+                    let swapX = document.getElementById('swap-x-' + id);
+                    if (swapX) {
+                        swapX.parentNode.removeChild(swapX);
+                    }
                 }
             }
         }
@@ -1122,7 +1128,22 @@
             line.style.backgroundColor = '#333';
             line.id = 'swap-line-' + gate.id;
 
+            let xSymbol = document.createElement('div');
+            xSymbol.className = 'swap-x';
+            xSymbol.style.position = 'absolute';
+            xSymbol.style.left = (x - 10) + 'px';
+            xSymbol.style.top = (y2 - 10) + 'px';
+            xSymbol.style.width = '20px';
+            xSymbol.style.height = '20px';
+            xSymbol.style.color = '#bbb';
+            xSymbol.style.fontSize = '28px';
+            xSymbol.style.textAlign = 'center';
+            xSymbol.style.lineHeight = '20px';
+            xSymbol.innerHTML = '✖';
+            xSymbol.id = 'swap-x-' + gate.id;
+
             document.getElementById('main').appendChild(line);
+            document.getElementById('main').appendChild(xSymbol);
         }
 
         function createPlaceholder(x, y, className, t = -1, q = -1) {
@@ -1220,7 +1241,7 @@
                     if (cnotLine) {
                         cnotLine.parentNode.removeChild(cnotLine);
                     }
-                    let cnotCircle = document.getElementById('cnot-circle-' + id);
+                    let cnotCircle = document.getElementById('circle-' + id);
                     if (cnotCircle) {
                         cnotCircle.parentNode.removeChild(cnotCircle);
                     }
@@ -1232,6 +1253,10 @@
                     let swapLine = document.getElementById('swap-line-' + id);
                     if (swapLine) {
                         swapLine.parentNode.removeChild(swapLine);
+                    }
+                    let swapX = document.getElementById('swap-x-' + id);
+                    if (swapX) {
+                        swapX.parentNode.removeChild(swapX);
                     }
                     drawSWAPLine(state.gates[idx]);
                 }
