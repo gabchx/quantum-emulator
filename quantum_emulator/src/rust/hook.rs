@@ -19,6 +19,7 @@ pub struct JSONGate {
     #[serde(rename = "thetaValue")]
     pub theta_value: Option<f64>,
     pub controls: Option<Vec<usize>>,
+    pub twoQubits: Option<Vec<usize>>,
 }
 
 pub fn parse_theta(theta_str: &str) -> f64 {
@@ -54,6 +55,7 @@ pub fn parse_gate_type(json_gate: &JSONGate) -> Option<GateType> {
             Some(GateType::Rz(theta))
         }
         "CNOT" => Some(GateType::CNOT),
+        "SWAP" => Some(GateType::SWAP),
         "Q" => None, // Ignore 'Q' gates
         _ => panic!("Unknown gate type: {}", json_gate.gate_type),
     }
@@ -68,6 +70,13 @@ pub fn convert_json_gate(json_gate: &JSONGate) -> Option<Gate> {
                     .as_ref()
                     .expect("CNOT gate missing controls");
                 vec![control_qubits[0], json_gate.q]
+            }
+            GateType::SWAP => {
+                let swap_qubits = json_gate
+                    .twoQubits
+                    .as_ref()
+                    .expect("SWAP gate missing second qubit");
+                vec![swap_qubits[0], swap_qubits[1]]
             }
             _ => vec![json_gate.q],
         };
