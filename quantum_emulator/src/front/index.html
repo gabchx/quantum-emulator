@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quantum Computing Circuit Emulator</title>
+    <title>Quantum Computing Circuit Designer</title>
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,7 +62,6 @@
         }
 
         #main {
-            position: relative;
             background-color: transparent;
             background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);
             height: 100%;
@@ -78,16 +77,15 @@
         .gate {
             background-color: #333;
             width: 46px;
+            /* border 1px each side */
             height: 46px;
             border: 1px solid #666;
             font-family: Arial, Helvetica, sans-serif;
-            z-index: 400;
-            /* Increased from 100 to 400 */
+            z-index: 100;
+            -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
+            -moz-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
             box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.75);
-            position: absolute;
-            /* Ensure absolute positioning */
         }
-
 
         .gate-placeholder {
             border: 2px dashed white !important;
@@ -165,11 +163,6 @@
             color: #bbb;
         }
 
-        .SWAP:before {
-            content: "SWAP";
-            font-size: 0.9em;
-        }
-
         .Q:before {
             content: "❘0⟩";
             font-size: 1.8em;
@@ -183,27 +176,9 @@
             background-color: rgba(255, 0, 0, 0.2);
         }
 
-        .swap-placeholder {
-            background-color: rgba(255, 0, 0, 0.2);
-        }
-
         .cnot-line {
-            position: absolute;
             z-index: 50;
         }
-
-        .cnot-circle {
-            z-index: 60;
-            position: absolute;
-            background-color: #bbb;
-            border-radius: 50%;
-            /* Other styling properties */
-        }
-
-        .swap-line {
-            z-index: 50;
-        }
-
 
         /* Styles for rotation gates */
         .rotation-gate {
@@ -234,20 +209,14 @@
         #container {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: calc(100% - 55px);
             /* Adjust for navbar height */
-        }
-
-        #gate-section {
-            position: relative;
-            height: 50px;
         }
 
         #circuit-designer {
             flex: 9;
             position: relative;
             overflow: auto;
-            z-index: 400;
         }
 
         #simulation-section {
@@ -259,19 +228,8 @@
             margin-top: 20px;
         }
 
-        .simulation-section-title {
-            text-align: left;
-
-            font-size: 20px;
-            color: #ffffff;
-            margin: 0;
-            padding: 10px;
-            background-color: #333;
-        }
-
         #calculation-time {
             text-align: left;
-            padding: 10px;
             font-size: 14px;
             color: #ffffff;
             margin: 0;
@@ -297,30 +255,13 @@
         }
 
         #simulation-chart {
-            width: 50%;
-        }
-
-        #probabilities-chart {
-            width: 50%;
+            width: 60%;
         }
 
         /* Style for calculation time */
         #calculation-time {
             margin-top: 10px;
             font-size: 14px;
-        }
-
-        #bloch-sphere-container {
-            width: 40%;
-            height: 80px;
-            display: block;
-        }
-
-        .label {
-            position: absolute;
-            color: white;
-            font-size: 16px;
-            pointer-events: none;
         }
     </style>
 </head>
@@ -330,9 +271,6 @@
         <section class="navbar-section">
             <h1 class="navbar-brand mr-2 text-light ml-2">Quantum Computing Circuit Designer</h1>
         </section>
-        <div id="gate-tool-box">
-            <!-- Existing main content will be rendered here -->
-        </div>
         <section class="navbar-section">
             <div class="input-group input-inline">
                 <button class="btn" onClick="showExport()">Code <i class="icon icon-resize-horiz"></i></button>
@@ -346,9 +284,6 @@
         </section>
     </header>
     <div id="container">
-        <div id="gate-section">
-
-        </div>
         <div id="circuit-designer">
             <div id="main">
                 <!-- Existing main content will be rendered here -->
@@ -356,7 +291,7 @@
         </div>
 
         <div id="simulation-section">
-            <h2 class="simulation-section-title">Simulation Results</h2>
+            <h2>Simulation Results</h2>
             <div id="calculation-time">
                 <!-- Calculation time will be displayed here -->
             </div>
@@ -365,19 +300,13 @@
                     <!-- Results (Table) will be displayed here -->
                 </div>
                 <div id="simulation-chart">
-                    <canvas id="quantumChart" width="1000" height="190"></canvas>
-                </div>
-                <div id="probabilities-chart">
-                    <canvas id="quantumChart2" width="1000" height="190"></canvas>
+                    <canvas id="quantumChart" width="1000" height="170"></canvas>
                 </div>
             </div>
         </div>
-        <div id="bloch-sphere-container">
-            <!-- Bloch sphere will be displayed here -->
-        </div>
-    </div>
 
-    <!-- Footer Section -->
+
+
 
     </div>
     <!-- EXPORT MODAL DIALOG -->
@@ -429,9 +358,6 @@
     </div>
     <!-- Include the math.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
-    <!-- Include the three.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <!-- Draggable Library -->
     <script>
         // draggable https://github.com/bcherny/draggable/
@@ -449,8 +375,7 @@
             { type: "RY", class: " gate-toolbar", x: 700, y: 5 },
             { type: "RZ", class: " gate-toolbar", x: 750, y: 5 },
             { type: "CNOT", class: " gate-toolbar", x: 820, y: 5 },
-            { type: "SWAP", class: " gate-toolbar", x: 870, y: 5 },
-            { type: "M", class: " gate-toolbar", x: 920, y: 5 },
+            { type: "M", class: " gate-toolbar", x: 890, y: 5 },
         ];
 
         // Exportable Variables
@@ -463,11 +388,9 @@
         // Global counter for gate IDs
         let gateIdCounter = 0;
 
-        // Variables for pending gates
+        // Variables for pending CNOT gate
         let pendingCNOTGate = null;
         let pendingControlSelection = false;
-
-        let pendingSWAPGate = null;
 
         const samples = [
             {
@@ -509,6 +432,9 @@
                         // Create 1/sqrt(2)(|00> + |11>)
                         { type: "H", q: 0, t: 1 },
                         { type: "CNOT", q: 1, t: 2, controls: [0] },
+                        // Measure
+                        { type: "M", q: 0, t: 3 },
+                        { type: "M", q: 1, t: 3 }
                     ]
                 }
             },
@@ -524,6 +450,10 @@
                         {
                             text: 'Alice is relating her bit with CNOT on bridge',
                             t: [3, 4]
+                        },
+                        {
+                            text: 'Measurement',
+                            t: [5, 6]
                         }
                     ],
                     qubits: 3,
@@ -540,7 +470,10 @@
                         // Alice - Relate her qubit with CNOT
                         { type: "CNOT", q: 1, t: 4, controls: [0] },
                         // Then apply H on her qubit 
-                        { type: "H", q: 0, t: 5 }
+                        { type: "H", q: 0, t: 5 },
+                        // Measure - 3rd bit no need to measure, discard
+                        { type: "M", q: 0, t: 7 },
+                        { type: "M", q: 1, t: 7 }
                     ]
                 }
             },
@@ -572,7 +505,10 @@
                         { type: "X", q: 1, t: 1 },
                         { type: "H", q: 1, t: 2 },
                         // Oracle e.g. Identity, balanced function
-                        { type: "CNOT", q: 1, t: 3, controls: [0] }
+                        { type: "CNOT", q: 1, t: 3, controls: [0] },
+                        // Measure
+                        { type: "M", q: 0, t: 4 },
+                        { type: "M", q: 1, t: 4 }
                     ]
                 }
             }
@@ -606,13 +542,14 @@
         }
 
         function renderToolbar() {
-            let toolbarElem = document.getElementById('gate-tool-box');
+            let toolbarElem = document.getElementById('main');
             toolbarGates.forEach((tgate) => {
                 let toolbarGate = createGate(tgate);
                 toolbarElem.appendChild(toolbarGate);
                 let options = {
                     grid: gridSize,
                     setCursor: true,
+                    smoothDrag: false,
                     smoothDrag: true,
                     onDragStart: startDragToolbarGate,
                     onDrag: updateToolbarGate,
@@ -621,6 +558,9 @@
                 let drag = new Draggable(toolbarGate, options);
                 drag.set(tgate.x, tgate.y);
                 gateRefs['gate-toolbar-' + tgate.type] = drag;
+
+                let toolbarPlaceholder = createPlaceholder(tgate.x, tgate.y);
+                toolbarElem.append(toolbarPlaceholder);
             });
         }
 
@@ -636,16 +576,9 @@
         function endDragToolbarGate(element, x, y, ev) {
             let tgateElem = gateRefs['gate-toolbar-' + element.dataset.type];
 
-            // Get the bounding rectangle of the main area
-            let mainRect = document.getElementById('main').getBoundingClientRect();
-
-            // Calculate the drop position relative to the main area
-            let dropX = ev.clientX - mainRect.left;
-            let dropY = ev.clientY - mainRect.top;
-
-            // Convert drop coordinates to grid positions
-            let t = getT(dropX);
-            let q = getQ(dropY);
+            // add new gate
+            let t = getT(x);
+            let q = getQ(y);
 
             if (tgateElem.element.dataset.type === 'CNOT') {
                 // For CNOT gates, check if any gate exists at time t
@@ -654,13 +587,6 @@
                     addCNOTGateFromToolbar(t, q, tgateElem.element.dataset.type);
                 } else {
                     alert('Cannot place a CNOT gate in a column that already contains a gate.');
-                }
-            } else if (tgateElem.element.dataset.type === 'SWAP') {
-                // For SWAP gates, check if any gate exists at time t
-                if (canAddCNOTGate(t)) { // Reusing the same function as for CNOT gates
-                    addSWAPGateFromToolbar(t, q, tgateElem.element.dataset.type);
-                } else {
-                    alert('Cannot place a SWAP gate in a column that already contains a gate.');
                 }
             } else {
                 if (canAddGate(t, q)) {
@@ -805,9 +731,6 @@
                     pendingCNOTGate.controls = [q];
                     pendingControlSelection = false;
 
-                    //state.gates.push(pendingCNOTGate);
-                    //addGate(pendingCNOTGate);
-
                     // Remove placeholders
                     removeControlPlaceholders();
 
@@ -827,90 +750,6 @@
             });
         }
 
-        function addSWAPGateFromToolbar(t, q, type) {
-            // Create temporary SWAP gate with first qubit and no second qubit
-            let tmp = {
-                type: 'SWAP',
-                q: q, // Just to satisfy the expected structure for JSON extraction
-                twoQubits: [q], // Fisrt qubit to store
-                t: t,
-                id: gateIdCounter++
-            };
-
-            if (!pendingControlSelection) {
-                pendingControlSelection = true;
-                pendingSWAPGate = tmp;
-
-                // Show placeholders on other qubits to select second qubit
-                showSwapPlaceholders(t, q);
-
-                // Add the gate to the grid but in a 'pending' state
-                state.gates.push(pendingSWAPGate);
-                addGate(pendingSWAPGate);
-            }
-        }
-
-        function showSwapPlaceholders(t, firstQubit) {
-            // Highlight adjacent qubits only
-            const adjacentQubits = [firstQubit - 1, firstQubit + 1].filter(q => q >= 0 && q < state.qubits);
-            for (let q of adjacentQubits) {
-                let x = getX(t);
-                let y = getY(q);
-
-                let placeholder = createSwapPlaceholder(x, y, t, q);
-                document.getElementById('main').appendChild(placeholder);
-            }
-        }
-
-        function createSwapPlaceholder(x, y, t, q) {
-            let placeholder = document.createElement('div');
-            placeholder.className = 'swap-placeholder';
-            placeholder.style.left = x + 'px';
-            placeholder.style.top = y + 'px';
-            placeholder.style.width = '46px';
-            placeholder.style.height = '46px';
-            placeholder.style.position = 'absolute';
-            placeholder.style.border = '2px dashed red';
-            placeholder.style.cursor = 'pointer';
-
-            placeholder.dataset.t = t;
-            placeholder.dataset.q = q;
-
-            placeholder.addEventListener('click', selectSecondSwapQubit);
-
-            return placeholder;
-        }
-
-        function selectSecondSwapQubit(e) {
-            let q2 = parseInt(e.target.dataset.q);
-
-            if (pendingControlSelection && pendingSWAPGate) {
-                // Check if q2 is adjacent to q1 and ensure second qubit is not the same as fisrt qubit
-                if ((Math.abs(pendingSWAPGate.twoQubits[0] - q2) === 1) && (pendingSWAPGate.twoQubits[0] !== q2)) {
-                    pendingSWAPGate.twoQubits.push(q2);
-                    pendingControlSelection = false;
-
-                    //pendingSWAPGate.q = pendingSWAPGate.twoQubits[1];
-                    //state.gates.push(pendingSWAPGate);
-                    //addGate(pendingSWAPGate);
-
-                    removeSwapPlaceholders();
-
-                    drawSWAPLine(pendingSWAPGate);
-                    pendingSWAPGate = null;
-                } else {
-                    alert('SWAP gate can only be applied to adjacent qubits and cannot be the same as the fisrt qubit chosen.');
-                }
-            }
-        }
-
-        function removeSwapPlaceholders() {
-            let placeholders = document.querySelectorAll('.swap-placeholder');
-            placeholders.forEach((elem) => {
-                elem.parentNode.removeChild(elem);
-            });
-        }
-
         function addGate(gate) {
             let gateElem = createGate(gate);
             document.getElementById('main').appendChild(gateElem);
@@ -924,7 +763,7 @@
             let cursor = true;
 
             // Can't move CNOT gate or initial Q gates
-            if (gate.type === 'Q' || gate.type === 'CNOT' || gate.type === 'SWAP') {
+            if (gate.type === 'Q' || gate.type === 'CNOT') {
                 limX = x;
                 limY = y;
                 cursor = false;
@@ -946,11 +785,6 @@
             // For CNOT gate, draw control line if control is set
             if (gate.type === 'CNOT' && gate.controls.length > 0) {
                 drawCNOTLine(gate);
-            }
-
-            // For SWAP gate, draw line if second qubit is selected
-            if (gate.type === 'SWAP' && gate.twoQubits.length === 2) {
-                drawSWAPLine(gate);
             }
         }
 
@@ -1073,18 +907,6 @@
                     if (cnotCircle) {
                         cnotCircle.parentNode.removeChild(cnotCircle);
                     }
-
-                    // Remove SWAP line if it exists
-                    let swapLine = document.getElementById('swap-line-' + id);
-                    if (swapLine) {
-                        swapLine.parentNode.removeChild(swapLine);
-                    }
-
-                    // Remove SWAP X if it exists
-                    let swapX = document.getElementById('swap-x-' + id);
-                    if (swapX) {
-                        swapX.parentNode.removeChild(swapX);
-                    }
                 }
             }
         }
@@ -1098,6 +920,16 @@
             let y1 = getY(controlQubit) + 23;
             let y2 = getY(targetQubit) + 23;
 
+            let line = document.createElement('div');
+            line.className = 'cnot-line';
+            line.style.position = 'absolute';
+            line.style.left = x + 'px';
+            line.style.top = Math.min(y1, y2) + 'px';
+            line.style.width = '4px';
+            line.style.height = Math.abs(y2 - y1) + 'px';
+            line.style.backgroundColor = '#333';
+            line.id = 'cnot-line-' + gate.id;
+
             // Create a filled circle at the control qubit
             let circle = document.createElement('div');
             circle.className = 'cnot-circle';
@@ -1110,56 +942,9 @@
             circle.style.borderRadius = '50%';
             circle.id = 'cnot-circle-' + gate.id;
 
-            let line = document.createElement('div');
-            line.className = 'cnot-line';
-            line.style.position = 'absolute';
-            line.style.left = (x - 2) + 'px';
-            line.style.top = Math.min(y1, y2) + 'px';
-            line.style.width = '4px';
-            line.style.height = Math.abs(y2 - y1) + 'px';
-            line.style.backgroundColor = '#333';
-            line.id = 'cnot-line-' + gate.id;
-
-            document.getElementById('main').appendChild(line);
             document.getElementById('main').appendChild(circle);
-
-        }
-
-        function drawSWAPLine(gate) {
-            let t = gate.t;
-            let q1 = gate.twoQubits[0];  // First qubit
-            let q2 = gate.twoQubits[1];  // Second qubit
-
-            let x = getX(t) + 23;
-            let y1 = getY(q1) + 23;
-            let y2 = getY(q2) + 23;
-
-            let line = document.createElement('div');
-            line.className = 'swap-line';
-            line.style.position = 'absolute';
-            line.style.left = x + 'px';
-            line.style.top = Math.min(y1, y2) + 'px';
-            line.style.width = '4px';
-            line.style.height = Math.abs(y2 - y1) + 'px';
-            line.style.backgroundColor = '#333';
-            line.id = 'swap-line-' + gate.id;
-
-            let xSymbol = document.createElement('div');
-            xSymbol.className = 'swap-x';
-            xSymbol.style.position = 'absolute';
-            xSymbol.style.left = (x - 10) + 'px';
-            xSymbol.style.top = (y2 - 10) + 'px';
-            xSymbol.style.width = '20px';
-            xSymbol.style.height = '20px';
-            xSymbol.style.color = '#bbb';
-            xSymbol.style.fontSize = '28px';
-            xSymbol.style.textAlign = 'center';
-            xSymbol.style.lineHeight = '20px';
-            xSymbol.innerHTML = '✖';
-            xSymbol.id = 'swap-x-' + gate.id;
-
             document.getElementById('main').appendChild(line);
-            document.getElementById('main').appendChild(xSymbol);
+
         }
 
         function createPlaceholder(x, y, className, t = -1, q = -1) {
@@ -1227,7 +1012,7 @@
                 let qNew = getQ(y);
 
                 // For gates other than CNOT
-                if (state.gates[idx].type !== 'CNOT' && state.gates[idx].type !== 'SWAP') {
+                if (state.gates[idx].type !== 'CNOT') {
                     // Check if we can move the gate to new position
                     if (canAddGate(tNew, qNew)) {
                         state.gates[idx].t = tNew;
@@ -1257,24 +1042,11 @@
                     if (cnotLine) {
                         cnotLine.parentNode.removeChild(cnotLine);
                     }
-                    let cnotCircle = document.getElementById('circle-' + id);
+                    let cnotCircle = document.getElementById('cnot-circle-' + id);
                     if (cnotCircle) {
                         cnotCircle.parentNode.removeChild(cnotCircle);
                     }
                     drawCNOTLine(state.gates[idx]);
-                }
-
-                // Update SWAP line if necessary
-                if (state.gates[idx].type === 'SWAP') {
-                    let swapLine = document.getElementById('swap-line-' + id);
-                    if (swapLine) {
-                        swapLine.parentNode.removeChild(swapLine);
-                    }
-                    let swapX = document.getElementById('swap-x-' + id);
-                    if (swapX) {
-                        swapX.parentNode.removeChild(swapX);
-                    }
-                    drawSWAPLine(state.gates[idx]);
                 }
             }
         }
@@ -1305,14 +1077,15 @@
             return offsetTop + q * gridSize;
         }
 
+        // translate screen coord x to evolution timeline t
         function getT(x) {
-            return Math.round((x - offsetLeft) / gridSize);
+            return (x - offsetLeft) / gridSize;
         }
 
+        // translate screen coord y to qubits position q
         function getQ(y) {
-            return Math.round((y - offsetTop) / gridSize);
+            return (y - offsetTop) / gridSize;
         }
-
 
         // Export functions
         function exportQASM(data) {
@@ -1332,10 +1105,6 @@
                 else if (gtype === 'CNOT') {
                     let controls = data?.gates[i]?.controls;
                     func = `cx q[${controls[0]}], q[${qpos}];`;
-                }
-                else if (gtype === 'SWAP') {
-                    let controls = data?.gates[i]?.twoQubits;
-                    func = `swap q[${qpos}], q[${controls[1]}];`;
                 }
                 else if (gtype === 'M') {
                     func = `measure q[${qpos}] -> c[${qpos}];`;
@@ -1407,10 +1176,6 @@ ${data.gates.filter(gate => gate.type === 'M').length > 0 ? `creg_c = ClassicalR
                         let controls = gate.controls;
                         func = `circuit.cx(qreg_q[${controls[0]}], qreg_q[${qpos}])`;
                         break;
-                    case 'SWAP':
-                        let controlsSWAP = gate.twoQubits;
-                        func = `circuit.swap(qreg_q[${qpos}], qreg_q[${controlsSWAP[1]}])`;
-                        break;
                     case 'H':
                         func = `circuit.h(qreg_q[${qpos}])`;
                         break;
@@ -1476,10 +1241,6 @@ ${data.gates.filter(gate => gate.type === 'M').length > 0 ? `creg_c = ClassicalR
                 else if (gtype === 'CNOT') {
                     let controls = data?.gates[i]?.controls;
                     func = `CNOT(qubits[${controls[0]}],qubits[${qpos}]);`;
-                }
-                else if (gtype === 'SWAP') {
-                    let controls = data?.gates[i]?.twoQubits;
-                    func = `SWAP(qubits[${qpos}],qubits[${controls[1]}]);`;
                 }
                 else if (gtype === 'RX' || gtype === 'RY' || gtype === 'RZ') {
                     let thetaValue = data?.gates[i]?.thetaValue;
@@ -1622,160 +1383,6 @@ ${usingCode}
             state.gates.push(newGate);
             addGate(newGate);
         }
-
-        function createTextSprite(message, color) {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            context.font = '38px Arial';
-            context.fillStyle = color;
-            context.fillText(message, 0, 32);
-
-            const texture = new THREE.Texture(canvas);
-            texture.needsUpdate = true;
-
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            sprite.scale.set(1, 0.5, 1);
-            return sprite;
-        }
-
-        // Set up the scene, camera, and renderer
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x222222);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 500);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, 400);
-        document.getElementById('bloch-sphere-container').appendChild(renderer.domElement);
-
-        // Create the Bloch sphere 
-        const sphereGeometry = new THREE.SphereGeometry(1, 26, 26);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x514f55, wireframe: true });
-        const blochSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        blochSphere.scale.set(2, 2, 2);
-
-        // Set axes helper
-        const axisMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-
-        const xAxisPoints = [
-            new THREE.Vector3(-2, 0, 0),
-            new THREE.Vector3(2, 0, 0)
-        ];
-        const yAxisPoints = [
-            new THREE.Vector3(0, -2, 0),
-            new THREE.Vector3(0, 2, 0)
-        ];
-        const zAxisPoints = [
-            new THREE.Vector3(0, 0, -2),
-            new THREE.Vector3(0, 0, 2)
-        ];
-        const negZLinePoints = [
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, -2, 0)
-        ];
-
-        const xAxisGeometry = new THREE.BufferGeometry().setFromPoints(xAxisPoints);
-        const yAxisGeometry = new THREE.BufferGeometry().setFromPoints(yAxisPoints);
-        const zAxisGeometry = new THREE.BufferGeometry().setFromPoints(zAxisPoints);
-        const negZLineGeometry = new THREE.BufferGeometry().setFromPoints(negZLinePoints);
-
-        const xAxis = new THREE.Line(xAxisGeometry, axisMaterial);
-        const yAxis = new THREE.Line(yAxisGeometry, axisMaterial);
-        const zAxis = new THREE.Line(zAxisGeometry, axisMaterial);
-        const negZAxis = new THREE.Line(negZLineGeometry, axisMaterial);
-
-        // Create a group to hold both the sphere and the axes
-        const group = new THREE.Group();
-        group.add(blochSphere);
-        group.add(xAxis);
-        group.add(yAxis);
-        group.add(zAxis);
-        group.add(negZAxis);
-        scene.add(group);
-
-        const xLabel = createTextSprite('X', 'white');
-        const zLabel = createTextSprite('|0⟩', 'white');
-        const yLabel = createTextSprite('Y', 'white');
-        const negZLabel = createTextSprite('|1⟩', 'white');
-
-        xLabel.position.set(2, 0, 0);
-        zLabel.position.set(0, 2, 0);
-        yLabel.position.set(0, 0, 1.5);
-        negZLabel.position.set(0, -2.25, 0);
-
-        group.add(xLabel);
-        group.add(zLabel);
-        group.add(yLabel);
-        group.add(negZLabel);
-
-        // Function to plot the state vector on the Bloch sphere
-        function plotStateVector(theta, phi, index) {
-
-            const previousVector = scene.getObjectByName(`stateVector${index}`);
-            const previousLabel = scene.getObjectByName(`stateVectorLabel${index}`);
-            if (previousVector) scene.remove(previousVector);
-            if (previousLabel) scene.remove(previousLabel);
-
-            // Calculate the Cartesian coordinates
-            const length = 2; // Match the size of the Bloch sphere
-            const x = length * Math.sin(theta) * Math.cos(phi);
-            const y = length * Math.sin(theta) * Math.sin(phi);
-            const z = length * Math.cos(theta);
-
-            console.log(`Qubit ${index}: x = ${x}, y = ${y}, z = ${z}`);
-
-            // Create a line to represent the state vector
-            const material = new THREE.LineBasicMaterial({ color: 0x4951c2 });
-            const points = [];
-            points.push(new THREE.Vector3(0, 0, 0));
-            points.push(new THREE.Vector3(x, z, y));
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            const line = new THREE.Line(geometry, material);
-            line.name = `stateVector${index}`;
-
-            // Add the state vector to the scene
-            scene.add(line);
-            group.add(line);
-
-            const vectorLabel = createTextSprite(`q[${index}]`, '#4951c2');
-            vectorLabel.position.set(x * 1.25, z * 1.25, y * 1.25);
-            vectorLabel.name = `stateVectorLabel${index}`;
-            group.add(vectorLabel);
-        }
-
-        // Set the camera position
-        camera.position.z = 3.75;
-
-        let isDragging = false;
-
-        // Event listeners for mouse actions
-        window.addEventListener('mousedown', (event) => {
-            isDragging = true;
-        });
-
-        window.addEventListener('mouseup', (event) => {
-            isDragging = false;
-        });
-
-        window.addEventListener('mousemove', (event) => {
-            if (isDragging) {
-                const deltaMove = {
-                    x: event.offsetX - previousMousePosition.x,
-                    y: event.offsetY - previousMousePosition.y,
-                };
-
-                group.rotation.y += deltaMove.x * 0.01;
-                group.rotation.x += deltaMove.y * 0.01;
-            }
-
-            previousMousePosition = { x: event.offsetX, y: event.offsetY };
-        });
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-
         const SERVER_URL = `${window.location.origin}/simulate`;
         function sendCircuitToServer() {
             var jsonCircuit = exportJSON(state);
@@ -1812,14 +1419,11 @@ ${usingCode}
         }
 
         function displaySimulationResults(data, calculationTime) {
-
-            console.log('Simulation data:', data); // Log the data object for debugging
-
             let resultsDiv = document.getElementById('simulation-results');
             let timeDiv = document.getElementById('calculation-time');
 
             // Extract basis_vectors and state_vector from data
-            const { basis_vectors, state_vector, probabilities, bloch_angles } = data;
+            const { basis_vectors, state_vector } = data;
 
             // Calculate magnitudes (|amplitude| = sqrt(real^2 + imag^2))
             const magnitudes = state_vector.map(amplitude => {
@@ -1828,21 +1432,9 @@ ${usingCode}
                 return Math.sqrt(real * real + imag * imag);
             });
 
-            // Plot the state vectors on the Bloch sphere
-            bloch_angles.forEach((angle, index) => {
-                const [theta, phi] = angle;
-
-                if (theta !== 0 || phi !== 0) {
-                    plotStateVector(theta, phi, index);
-                }
-            });
-
             // Destroy the previous chart instance if it exists (to avoid stacking multiple charts)
             if (window.myQuantumChart) {
                 window.myQuantumChart.destroy();
-            }
-            if (window.myQuantumChart2) {
-                window.myQuantumChart2.destroy();
             }
 
             // Create the Chart.js bar chart
@@ -1868,30 +1460,6 @@ ${usingCode}
                 }
             });
 
-
-            const cp = document.getElementById('quantumChart2').getContext('2d');
-            window.myQuantumChart2 = new Chart(cp, {
-                type: 'bar',
-                data: {
-                    labels: basis_vectors,  // X-axis: basis vectors
-                    datasets: [{
-                        label: 'Probabilities',
-                        data: probabilities,  // Y-axis: magnitudes of the state vector
-                        backgroundColor: '#4fcbe1',
-                        borderColor: '#49bcd1',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-
             // Display the calculation time
             timeDiv.textContent = 'Calculation time: ' + calculationTime + ' ms';
         }
@@ -1905,6 +1473,7 @@ ${usingCode}
             timeDiv.textContent = '';
         }
     </script>
+
 </body>
 
 </html>
