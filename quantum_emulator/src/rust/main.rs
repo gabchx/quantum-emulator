@@ -8,7 +8,7 @@ mod logic;
 use crate::hook::{convert_json_circuit, JSONCircuit};
 use crate::logic::bloch_sphere_angles_per_qubit;
 use rocket::serde::json::Json;
-use rocket::{fs::NamedFile, http::Method, response::Redirect};
+use rocket::{fs::NamedFile, response::Redirect};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use std::env;
 

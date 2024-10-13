@@ -111,22 +111,17 @@ impl Gate {
             GateType::CNOT => {
                 let control = self.qubits[0];
                 let target = self.qubits[1];
-                println!("oui");
                 get_cnot_matrix(n_qubits, control, target)
             }
             GateType::SWAP => {
                 let qubit1 = self.qubits[0];
                 let qubit2 = self.qubits[1];
-                println!("swap matrix");
-                println!("{:?}", qubit1);
-                println!("{:?}", qubit2);
                 get_swap_matrix(n_qubits, qubit1, qubit2)
             }
             _ => {
                 let gate_matrix = self.gate_type.unitary_matrix();
                 let mut matrices = Vec::new();
 
-                println!("{:?}", &self.gate_type);
                 for q in 0..n_qubits {
                     if self.qubits.contains(&(n_qubits - q - 1)) {
                         matrices.push(DMatrix::from_row_slice(2, 2, gate_matrix.as_slice()));
@@ -151,13 +146,10 @@ impl Circuit {
         let dim = 1 << self.n_qubits;
         let mut u = DMatrix::<Complex<f64>>::identity(dim, dim);
 
-        println!("Initial state:\n{:?}", u);
         for gate in &self.gates {
             let u_gate = gate.get_full_unitary(self.n_qubits);
             u = u_gate * u;
         }
-
-        println!("Initial state:\n{:?}", u);
         u
     }
 

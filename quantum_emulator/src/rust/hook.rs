@@ -18,7 +18,7 @@ pub struct JSONGate {
     pub id: usize,
     pub theta: Option<String>,
     #[serde(rename = "thetaValue")]
-    pub theta_value: Option<f64>,
+    pub thetaValue: Option<f64>,
     pub controls: Option<Vec<usize>>,
     pub twoQubits: Option<Vec<usize>>,
 }

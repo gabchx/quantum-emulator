@@ -10,10 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        /* Existing styles... */
-
         html {
             height: 100%;
         }
@@ -24,6 +21,7 @@
             height: 100%;
             background-color: #434343;
             background-image: linear-gradient(#434343, #282828);
+            zoom: 90%
         }
 
         pre {
@@ -65,8 +63,10 @@
             position: relative;
             background-color: transparent;
             background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);
-            height: 100%;
+            height: 150%;
             background-size: 100px 100px;
+            background-repeat: repeat;
+            overflow: hidden;
         }
 
         .qubit-line {
@@ -280,9 +280,9 @@
         .simulation-container {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             /* Aligns table and chart at the top */
-            margin: 0;
+            margin: 10px;
             /* Ensure there's no extra margin pushing it down */
         }
 
@@ -311,9 +311,11 @@
         }
 
         #bloch-sphere-container {
-            width: 40%;
-            height: 80px;
-            display: block;
+            width: 100%;
+            zoom: 1.1;
+            height: 50px;
+            display: flex;
+            justify-content: center;
         }
 
         .label {
@@ -328,7 +330,7 @@
 <body>
     <header class="navbar" id="toolbar">
         <section class="navbar-section">
-            <h1 class="navbar-brand mr-2 text-light ml-2">Quantum Computing Circuit Designer</h1>
+            <h1 class="navbar-brand mr-2 text-light ml-2">Quantum Computing Circuit Emulator</h1>
         </section>
         <div id="gate-tool-box">
             <!-- Existing main content will be rendered here -->
@@ -366,9 +368,6 @@
                 <!-- Calculation time will be displayed here -->
             </div>
             <div class="simulation-container">
-                <div id="simulation-results">
-                    <!-- Results (Table) will be displayed here -->
-                </div>
                 <div id="simulation-chart">
                     <canvas id="quantumChart" width="1000" height="190"></canvas>
                 </div>
