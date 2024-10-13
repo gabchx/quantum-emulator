@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "quantum_emulator"
+version = "0.1.0"
+description = ""
+authors = ["Gabriel Chaix <gabriel.chaix@edu.devinci.fr>", "Malo Leroy <malo.leroy@edu.devinci.fr>","Marine Jolibert <marine.jolibert@edu.devinci.fr>"]
+
+packages = [
+  { include = "python_backend", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.0.3"
+flask-cors = "^5.0.0"
+numpy = "^2.1.1"
+
+[tool.poetry.scripts]
+app = "python_backend.main:run"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

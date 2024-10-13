@@ -1,3 +1,4 @@
+// main.rs
 #[macro_use]
 extern crate rocket;
 
@@ -12,7 +13,6 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use std::env;
 
 #[post("/simulate", format = "json", data = "<json_circuit>")]
-
 async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     let circuit = convert_json_circuit(json_circuit.into_inner());
     let v = circuit.get_state_vector();
@@ -20,7 +20,7 @@ async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
     let p = circuit.get_state_probabilities();
 
     let v_serializable: Vec<(f64, f64)> = v.iter().map(|c| (c.re, c.im)).collect();
-    let b_serializable: Vec<String> = b.iter().map(|s| s.clone()).collect();
+    let b_serializable: Vec<String> = b.iter().cloned().collect();
 
     let bloch_angles = bloch_sphere_angles_per_qubit(&v, circuit.n_qubits);
 
@@ -31,7 +31,7 @@ async fn simulate(json_circuit: Json<JSONCircuit>) -> Json<serde_json::Value> {
         "bloch_angles": bloch_angles,
     });
 
-    Json(serde_json::json!(response))
+    Json(response)
 }
 
 #[options("/simulate")]
@@ -41,16 +41,13 @@ fn options_simulate() -> &'static str {
 
 #[get("/")]
 fn index() -> Redirect {
-    let redirect = Redirect::to(uri!("/home"));
-    redirect
+    Redirect::to(uri!("/home"))
 }
 
 #[get("/home")]
 async fn home() -> Result<NamedFile, std::io::Error> {
-    // Construct the path to the index.html file
     let mut path = env::current_dir().expect("Failed to get current directory");
     path.push("src/front/index.html");
-
     NamedFile::open(path).await
 }
 
@@ -58,18 +55,29 @@ async fn home() -> Result<NamedFile, std::io::Error> {
 fn rocket() -> _ {
     use rocket::http::Method;
 
-    let cors = CorsOptions::default()
-        .allowed_origins(AllowedOrigins::all())
-        .allowed_methods(
-            vec![Method::Post, Method::Get, Method::Options]
-                .into_iter()
-                .map(From::from)
-                .collect(),
-        )
-        .allowed_headers(AllowedHeaders::all())
-        .allow_credentials(true);
+    // Option A: Specify both origins
+    // let allowed_origins = AllowedOrigins::some(
+    //     &["http://localhost:8000", "http://127.0.0.1:8000"],
+    //     &[] as &[&str],
+    // );
+
+    // Option B: Allow all origins
+    let allowed_origins = AllowedOrigins::all();
+
+    let cors = CorsOptions {
+        allowed_origins,
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::all(),
+        allow_credentials: false,
+        ..Default::default()
+    }
+    .to_cors()
+    .expect("Error creating CORS");
 
     rocket::build()
         .mount("/", routes![simulate, options_simulate, index, home])
-        .attach(cors.to_cors().expect("Error attaching CORS"))
+        .attach(cors)
 }

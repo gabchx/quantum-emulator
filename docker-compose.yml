@@ -4,6 +4,7 @@ services:
   quantum_emulator:
     build: .
     ports:
-      - "8088:8000"
+      - "8000:8000"
+      - "8001:8001"
     environment:
       - RUST_LOG=info
