@@ -575,7 +575,172 @@
                         { type: "X", q: 1, t: 1 },
                         { type: "H", q: 1, t: 2 },
                         // Oracle e.g. Identity, balanced function
-                        { type: "CNOT", q: 1, t: 3, controls: [0] }
+                        { type: "CNOT", q: 1, t: 3, controls: [0] },
+                        {
+                            "type": "H",
+                            "q": 0,
+                            "t": 4,
+                        }
+                    ]
+                }
+            },
+            {
+                name: "Deutsch-Jozsa Algorithm",
+                category: "Algorithm",
+                state: {
+                    "labels": [],
+                    "qubits": 5,
+                    "gates": [
+                        {
+                            "type": "Q",
+                            "q": 0,
+                            "t": 0,
+                            "id": 0
+                        },
+                        {
+                            "type": "Q",
+                            "q": 1,
+                            "t": 0,
+                            "id": 1
+                        },
+                        {
+                            "type": "Q",
+                            "q": 2,
+                            "t": 0,
+                            "id": 2
+                        },
+                        {
+                            "type": "Q",
+                            "q": 3,
+                            "t": 0,
+                            "id": 3
+                        },
+                        {
+                            "type": "Q",
+                            "q": 4,
+                            "t": 0,
+                            "id": 4
+                        },
+                        {
+                            "type": "X",
+                            "q": 4,
+                            "t": 1,
+                            "id": 5
+                        },
+                        {
+                            "type": "H",
+                            "q": 0,
+                            "t": 2,
+                            "id": 6
+                        },
+                        {
+                            "type": "H",
+                            "q": 1,
+                            "t": 2,
+                            "id": 7
+                        },
+                        {
+                            "type": "H",
+                            "q": 2,
+                            "t": 2,
+                            "id": 8
+                        },
+                        {
+                            "type": "H",
+                            "q": 3,
+                            "t": 2,
+                            "id": 9
+                        },
+                        {
+                            "type": "H",
+                            "q": 4,
+                            "t": 2,
+                            "id": 10
+                        },
+                        {
+                            "type": "X",
+                            "q": 0,
+                            "t": 3,
+                            "id": 11
+                        },
+                        {
+                            "type": "X",
+                            "q": 2,
+                            "t": 3,
+                            "id": 12
+                        },
+                        {
+                            "type": "CNOT",
+                            "q": 4,
+                            "t": 5,
+                            "controls": [
+                                1
+                            ],
+                            "id": 13
+                        },
+                        {
+                            "type": "CNOT",
+                            "q": 4,
+                            "t": 4,
+                            "controls": [
+                                0
+                            ],
+                            "id": 14
+                        },
+                        {
+                            "type": "CNOT",
+                            "q": 4,
+                            "t": 6,
+                            "controls": [
+                                2
+                            ],
+                            "id": 15
+                        },
+                        {
+                            "type": "CNOT",
+                            "q": 4,
+                            "t": 7,
+                            "controls": [
+                                3
+                            ],
+                            "id": 16
+                        },
+                        {
+                            "type": "X",
+                            "q": 0,
+                            "t": 8,
+                            "id": 17
+                        },
+                        {
+                            "type": "X",
+                            "q": 2,
+                            "t": 8,
+                            "id": 18
+                        },
+                        {
+                            "type": "H",
+                            "q": 1,
+                            "t": 9,
+                            "id": 19
+                        },
+                        {
+                            "type": "H",
+                            "q": 0,
+                            "t": 9,
+                            "id": 20
+                        },
+                        {
+                            "type": "H",
+                            "q": 2,
+                            "t": 9,
+                            "id": 21
+                        },
+                        {
+                            "type": "H",
+                            "q": 3,
+                            "t": 9,
+                            "id": 22
+                        }
                     ]
                 }
             }

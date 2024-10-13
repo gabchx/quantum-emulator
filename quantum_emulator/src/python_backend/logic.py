@@ -83,7 +83,7 @@ class Gate:
         else:
             gate_matrix = self.gate_type.unitary_matrix()
             matrices = []
-            # Reverse the qubit order to match Rust's ordering (MSB to LSB)
+            # **Corrected:** Iterate from n_qubits-1 down to 0
             for q in reversed(range(n_qubits)):
                 if q in self.qubits:
                     matrices.append(gate_matrix)
@@ -133,9 +133,9 @@ def get_cnot_matrix(n_qubits, control, target):
     dim = 1 << n_qubits
     cnot_matrix = np.zeros((dim, dim), dtype=np.complex128)
     for i in range(dim):
-        control_bit = (i >> (n_qubits - control - 1)) & 1  # Adjusted for reversed qubit order
+        control_bit = (i >> control) & 1  # **Adjusted for LSB first**
         if control_bit == 1:
-            modified_i = i ^ (1 << (n_qubits - target - 1))  # Adjusted for reversed qubit order
+            modified_i = i ^ (1 << target)
         else:
             modified_i = i
         cnot_matrix[i, modified_i] = 1.0
@@ -145,10 +145,10 @@ def get_swap_matrix(n_qubits, qubit1, qubit2):
     dim = 1 << n_qubits
     swap_matrix = np.zeros((dim, dim), dtype=np.complex128)
     for i in range(dim):
-        bit_a = (i >> (n_qubits - qubit1 - 1)) & 1  # Adjusted for reversed qubit order
-        bit_b = (i >> (n_qubits - qubit2 - 1)) & 1  # Adjusted for reversed qubit order
+        bit_a = (i >> qubit1) & 1  # **Adjusted for LSB first**
+        bit_b = (i >> qubit2) & 1  # **Adjusted for LSB first**
         if bit_a != bit_b:
-            swapped_i = i ^ (1 << (n_qubits - qubit1 - 1)) ^ (1 << (n_qubits - qubit2 - 1))  # Adjusted
+            swapped_i = i ^ (1 << qubit1) ^ (1 << qubit2)
         else:
             swapped_i = i
         swap_matrix[i, swapped_i] = 1.0
@@ -173,7 +173,7 @@ def extract_single_qubit_amplitudes(state_vector, n_qubits, target_qubit):
     alpha = 0.0 + 0.0j
     beta = 0.0 + 0.0j
     for i in range(dim):
-        qubit_state = (i >> (n_qubits - target_qubit - 1)) & 1  # Adjusted for reversed qubit order
+        qubit_state = (i >> target_qubit) & 1  # **Adjusted for LSB first**
         if qubit_state == 0:
             alpha += state_vector[i, 0]
         else:
@@ -214,7 +214,7 @@ def convert_json_gate(json_gate):
     if gate_type.gate_type == "CNOT":
         if not json_gate.controls:
             raise ValueError("CNOT gate missing controls")
-        # Adjust qubit ordering: Control is first, target is second
+        # **Control is first, target is second**
         qubits = [json_gate.controls[0], json_gate.q]
     elif gate_type.gate_type == "SWAP":
         if not json_gate.twoQubits:
