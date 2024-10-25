@@ -4,7 +4,8 @@ Homemade quantum emulator, made with Rust & Python for resources benchmark.
 
 ## Usage
 
-![Capture d’écran 2024-10-14 à 18 58 45](https://github.com/user-attachments/assets/23c1a7f4-4c5c-4813-80a2-114554348493)
+![qe](https://github.com/user-attachments/assets/a4052e59-6397-4d99-b248-8d85c5daf70f)
+
 
 • Drag and drop gates from the toolbox.  
 • Add qubits on `Qubit +`.  
